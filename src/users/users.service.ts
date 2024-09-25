@@ -32,7 +32,7 @@ export class UsersService {
     password,
   }: LoginInput): Promise<{ ok: boolean; error?: string; token?: string }> {
     try {
-      const user = this.users.findOneBy({ email });
+      const user = await this.users.findOneBy({ email });
       if (!user) {
         return { ok: false, error: 'User not found' };
       }
