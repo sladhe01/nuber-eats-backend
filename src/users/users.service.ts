@@ -55,23 +55,21 @@ export class UserService {
       if (!user) {
         return { ok: false, error: 'User not found' };
       }
-      const passwordCorrect = user.checkPassword(password);
+      const passwordCorrect = await user.checkPassword(password);
       if (!passwordCorrect) {
         return { ok: false, error: 'Wrong password' };
       }
       const token = this.jwtService.sign(user.id);
       return { ok: true, token };
     } catch (error) {
-      return { ok: false, error };
+      return { ok: false, error: "Can't log user in" };
     }
   }
 
   async findById(id: number): Promise<UserProfileOutput> {
     try {
-      const user = await this.users.findOneBy([{ id }]);
-      if (user) {
-        return { ok: true, user };
-      }
+      const user = await this.users.findOneByOrFail([{ id }]);
+      return { ok: true, user };
     } catch (error) {
       return { ok: false, error: 'User Not Found' };
     }
@@ -116,7 +114,7 @@ export class UserService {
       }
       return { ok: false, error: 'Verification not found' };
     } catch (error) {
-      return { ok: false, error };
+      return { ok: false, error: 'Could not verify email' };
     }
   }
 }
