@@ -174,6 +174,7 @@ describe('UserService', () => {
   describe('editProfile', () => {
     it('should change email', async () => {
       const oldUser = {
+        id: 1,
         email: 'old@user.com',
         verified: true,
       };
@@ -185,11 +186,13 @@ describe('UserService', () => {
         code: 'testcode',
       };
       const newUser = {
+        id: 1,
         verified: false,
         email: 'new@user.com',
       };
 
       usersRepository.findOneByOrFail.mockResolvedValue(oldUser);
+      verificationRepository.delete.mockResolvedValue({});
       verificationRepository.create.mockReturnValue(newVerification);
       verificationRepository.save.mockResolvedValue(newVerification);
 
@@ -201,6 +204,11 @@ describe('UserService', () => {
       expect(usersRepository.findOneByOrFail).toHaveBeenCalledWith([
         { id: editProfileArgs.id },
       ]);
+
+      expect(verificationRepository.delete).toHaveBeenCalledTimes(1);
+      expect(verificationRepository.delete).toHaveBeenCalledWith({
+        user: { id: editProfileArgs.id },
+      });
 
       expect(verificationRepository.create).toHaveBeenCalledTimes(1);
       expect(verificationRepository.create).toHaveBeenCalledWith({
@@ -220,6 +228,44 @@ describe('UserService', () => {
       expect(usersRepository.save).toHaveBeenCalledWith(newUser);
 
       expect(result).toMatchObject({ ok: true });
+    });
+
+    it('should not change with existing email', async () => {
+      const oldUser = {
+        email: 'old@user.com',
+      };
+      const editProfileArgs = {
+        id: 1,
+        email: 'exist@user.com',
+      };
+      const newVerification = {
+        code: 'testcode',
+      };
+      const existingUser = {
+        email: 'exist@user.com',
+      };
+
+      usersRepository.findOneByOrFail.mockResolvedValue(oldUser);
+      usersRepository.findOne.mockResolvedValue(existingUser);
+
+      const result = await service.editProfile(editProfileArgs.id, {
+        email: editProfileArgs.email,
+      });
+
+      expect(usersRepository.findOneByOrFail).toHaveBeenCalledTimes(1);
+      expect(usersRepository.findOneByOrFail).toHaveBeenCalledWith([
+        { id: editProfileArgs.id },
+      ]);
+
+      expect(usersRepository.findOne).toHaveBeenCalledTimes(1);
+      expect(usersRepository.findOne).toHaveBeenCalledWith({
+        where: { email: editProfileArgs.email },
+      });
+
+      expect(result).toMatchObject({
+        ok: false,
+        error: 'Email is aleady exists',
+      });
     });
 
     it('should change password', async () => {

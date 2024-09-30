@@ -82,8 +82,13 @@ export class UserService {
     try {
       const user = await this.users.findOneByOrFail([{ id: userId }]);
       if (email) {
+        const isExist = await this.users.findOne({ where: { email } });
+        if (isExist) {
+          return { ok: false, error: 'Email is aleady exists' };
+        }
         user.email = email;
         user.verified = false;
+        await this.verifications.delete({ user: { id: user.id } });
         const verification = await this.verifications.save(
           this.verifications.create({ user }),
         );
