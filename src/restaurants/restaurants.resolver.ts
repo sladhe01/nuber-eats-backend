@@ -102,9 +102,9 @@ export class CategoryResolver {
 
   @Query(() => RestaurantOutput)
   restaurant(
-    @Args() restaurantInpu: RestaurantInput,
+    @Args() restaurantInput: RestaurantInput,
   ): Promise<RestaurantOutput> {
-    return this.restaurantService.findRestaurantById(restaurantInpu);
+    return this.restaurantService.findRestaurantById(restaurantInput);
   }
 
   @Query(() => SearchRestaurantOutput)
