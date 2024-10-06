@@ -151,7 +151,7 @@ export class RestaurantService {
           where: { category: { id: category.id } },
         });
       const totalPages = Math.ceil(totalResults / take);
-      return { ok: true, category, restaurants, totalPages };
+      return { ok: true, category, restaurants, totalResults, totalPages };
     } catch (error) {
       return { ok: false, error: 'Could not load category' };
     }
