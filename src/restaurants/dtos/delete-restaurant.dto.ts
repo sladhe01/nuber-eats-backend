@@ -1,5 +1,4 @@
-import { ArgsType, Field, ObjectType, PickType } from '@nestjs/graphql';
-import { Restaurant } from '../entities/restaurant.entity';
+import { ArgsType, Field, ObjectType } from '@nestjs/graphql';
 import { CoreOutput } from 'src/common/dtos/output.dto';
 
 @ArgsType()

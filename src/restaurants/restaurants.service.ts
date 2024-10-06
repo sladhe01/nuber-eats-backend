@@ -1,7 +1,5 @@
 import { Injectable } from '@nestjs/common';
-import { InjectRepository } from '@nestjs/typeorm';
-import { Restaurant } from './entities/restaurant.entity';
-import { ILike, Repository } from 'typeorm';
+import { ILike } from 'typeorm';
 import {
   CreateRestaurantInput,
   CreateRestaurantOutput,
@@ -25,12 +23,12 @@ import {
   SearchRestaurantInput,
   SearchRestaurantOutput,
 } from './dtos/search-restaurant.dto';
+import { RestaurantRepository } from './repositories/restaurant.repository';
 
 @Injectable()
 export class RestaurantService {
   constructor(
-    @InjectRepository(Restaurant)
-    private readonly restaurants: Repository<Restaurant>,
+    private readonly restaurants: RestaurantRepository,
     private readonly categories: CategoryRepository,
   ) {}
 
@@ -47,7 +45,6 @@ export class RestaurantService {
       if (!category) {
         return { ok: false, error: 'Not found category' };
       }
-      console.log(category);
       //카테고리는 admin의 영역으로 미리 몇 가지 항목이 준비되어있어야 함
       //따로 Enum으로 할 건 아니고 프론트에서 선택지를 주고 그 선택지와 일치하는 문자열을 전달받을 예정,
       //없는 카테고리라고 여기서 새로 생성하지 않을 예정
@@ -55,7 +52,6 @@ export class RestaurantService {
       await this.restaurants.save(newRestaurant);
       return { ok: true };
     } catch (error) {
-      console.log(error);
       return { ok: false, error: 'Could not create restaurant' };
     }
   }
@@ -86,13 +82,11 @@ export class RestaurantService {
           return { ok: false, error: 'Not found category' };
         }
       }
-      await this.restaurants.save([
-        {
-          id: editRestaurantInput.restaurantId,
-          ...editRestaurantInput,
-          ...(category && { category }),
-        },
-      ]);
+      await this.restaurants.save({
+        id: editRestaurantInput.restaurantId,
+        ...editRestaurantInput,
+        ...(category && { category }),
+      });
       return { ok: true };
     } catch (error) {
       return { ok: false, error: 'Could not update restaurant' };
@@ -141,6 +135,7 @@ export class RestaurantService {
   async findCategoryBySlug({
     slug,
     page,
+    take,
   }: CategoryInput): Promise<CategoryOutput> {
     try {
       const category = await this.categories.findOne({
@@ -149,26 +144,27 @@ export class RestaurantService {
       if (!category) {
         return { ok: false, error: 'Category not found' };
       }
-      const restaurants = await this.restaurants.find({
-        where: { category: { id: category.id } },
-        take: 8,
-        skip: (page - 1) * 8,
-      });
-      const totalResults = await this.countRestaurants(category);
-      const totalPages = Math.ceil(totalResults / 8);
-      return { ok: true, category, restaurants, totalPages };
+      const [restaurants, totalResults] =
+        await this.restaurants.pagenatedFindAndCount({
+          page,
+          take,
+          where: { category: { id: category.id } },
+        });
+      const totalPages = Math.ceil(totalResults / take);
+      return { ok: true, category, restaurants, totalResults, totalPages };
     } catch (error) {
       return { ok: false, error: 'Could not load category' };
     }
   }
 
-  async allRestaurants({ page }: RestaurantsInput): Promise<RestaurantsOutput> {
+  async allRestaurants({
+    page,
+    take,
+  }: RestaurantsInput): Promise<RestaurantsOutput> {
     try {
-      const [results, totalResults] = await this.restaurants.findAndCount({
-        take: 8,
-        skip: (page - 1) * 8,
-      });
-      const totalPages = Math.ceil(totalResults / 8);
+      const [results, totalResults] =
+        await this.restaurants.pagenatedFindAndCount({ page, take });
+      const totalPages = Math.ceil(totalResults / take);
       return { ok: true, results, totalPages, totalResults };
     } catch (error) {
       return { ok: false, error: 'Could not load restaurants' };
@@ -194,17 +190,19 @@ export class RestaurantService {
   async searchRestaurantByName({
     query,
     page,
+    take,
   }: SearchRestaurantInput): Promise<SearchRestaurantOutput> {
     try {
-      const [restaurants, totalResults] = await this.restaurants.findAndCount({
-        where: { name: ILike(`%${query}%`) },
-        take: 8,
-        skip: (page - 1) * 8,
-      });
-      if (!restaurants) {
+      const [restaurants, totalResults] =
+        await this.restaurants.pagenatedFindAndCount({
+          where: { name: ILike(`%${query}%`) },
+          take,
+          page,
+        });
+      if (restaurants.length === 0) {
         return { ok: false, error: 'Not found restaurant' };
       }
-      const totalPages = Math.ceil(totalResults / 8);
+      const totalPages = Math.ceil(totalResults / take);
       return { ok: true, restaurants, totalPages, totalResults };
     } catch (error) {
       return { ok: false, error: 'Could not search for restaurants' };

@@ -5,17 +5,16 @@ import { Restaurant } from './entities/restaurant.entity';
 import { CategoryResolver, RestaurantsResolver } from './restaurants.resolver';
 import { Category } from './entities/category.entity';
 import { CategoryRepository } from './repositories/category.repository';
+import { RestaurantRepository } from './repositories/restaurant.repository';
 
 @Module({
   imports: [TypeOrmModule.forFeature([Restaurant, Category])],
-  // // imports: [TypeOrmModule.forFeature([Restaurant, CategoryRepository])],
-  // // imports: [TypeOrmModule.forFeature([Restaurant])],
-  // providers: [RestaurantService, RestaurantsResolver],
   providers: [
     RestaurantService,
     RestaurantsResolver,
     CategoryResolver,
     CategoryRepository,
+    RestaurantRepository,
   ],
 })
 export class RestaurantsModule {}

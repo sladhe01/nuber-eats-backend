@@ -62,7 +62,7 @@ export class RestaurantsResolver {
   }
 
   @Mutation(() => DeleteRestaurantOutput)
-  deletRestaurant(
+  deleteRestaurant(
     @AuthUser() owner: User,
     @Args() deleteRestaurantInput: DeleteRestaurantInput,
   ): Promise<DeleteRestaurantOutput> {
@@ -84,7 +84,7 @@ export class CategoryResolver {
   }
 
   @Query(() => AllCategoriesOutput)
-  allcategories(): Promise<AllCategoriesOutput> {
+  allCategories(): Promise<AllCategoriesOutput> {
     return this.restaurantService.allCategories();
   }
 
@@ -102,9 +102,9 @@ export class CategoryResolver {
 
   @Query(() => RestaurantOutput)
   restaurant(
-    @Args() restaurantInpu: RestaurantInput,
+    @Args() restaurantInput: RestaurantInput,
   ): Promise<RestaurantOutput> {
-    return this.restaurantService.findRestaurantById(restaurantInpu);
+    return this.restaurantService.findRestaurantById(restaurantInput);
   }
 
   @Query(() => SearchRestaurantOutput)

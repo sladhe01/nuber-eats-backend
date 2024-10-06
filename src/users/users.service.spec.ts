@@ -106,7 +106,7 @@ describe('UserService', () => {
       expect(result).toMatchObject({ ok: true });
     });
 
-    it('should fail on exepction', async () => {
+    it('should fail on excepction', async () => {
       usersRepository.findOneBy.mockRejectedValue(new Error());
       const result = await service.createAccount(createAccountArgs);
       expect(result).toMatchObject({
