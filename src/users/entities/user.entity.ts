@@ -1,10 +1,16 @@
-import { Field, ObjectType, registerEnumType } from '@nestjs/graphql';
+import {
+  Field,
+  InputType,
+  ObjectType,
+  registerEnumType,
+} from '@nestjs/graphql';
 import { CoreEntity } from 'src/common/entities/core.entity';
 import { BeforeInsert, BeforeUpdate, Column, Entity, OneToMany } from 'typeorm';
 import * as bcrypt from 'bcrypt';
 import { InternalServerErrorException } from '@nestjs/common';
 import { IsBoolean, IsEmail, IsEnum, IsString } from 'class-validator';
 import { Restaurant } from 'src/restaurants/entities/restaurant.entity';
+import { Order } from 'src/orders/entities/order.entity';
 
 export enum UserRole {
   Client = 'Client',
@@ -13,6 +19,7 @@ export enum UserRole {
 }
 registerEnumType(UserRole, { name: 'UserRole' });
 
+@InputType('UserInputType') //따로 명명값을 주지 않으면 ObejectType과 구분못하기 때문에 같이 쓸 때는 필히 적어줘야한다.
 @ObjectType()
 @Entity()
 export class User extends CoreEntity {
@@ -39,8 +46,14 @@ export class User extends CoreEntity {
   @OneToMany(() => Restaurant, (restaurant) => restaurant.owner, {
     nullable: true,
   })
-  @Field(() => [Restaurant])
+  @Field(() => [Restaurant], { nullable: true })
   restaurants?: Restaurant[];
+
+  @OneToMany(() => Order, (order) => order.customer, { nullable: true })
+  orders?: Order[];
+
+  @OneToMany(() => Order, (ride) => ride.driver, { nullable: true })
+  rides?: Order[];
 
   @BeforeInsert()
   @BeforeUpdate()

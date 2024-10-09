@@ -456,7 +456,10 @@ describe('RestaurntService', () => {
 
   describe('findRestaurantById', () => {
     const findRestaurantByIdArgs = { restaurantId: 1 };
-    const mockedRestaurant = { id: 1, name: 'test-restaurant' };
+    const mockedRestaurant = {
+      id: 1,
+      name: 'test-restaurant',
+    };
     it('should fail if restaurant is not found', async () => {
       jest.spyOn(restaurantRepository, 'findOne').mockResolvedValue(null);
 
@@ -465,6 +468,7 @@ describe('RestaurntService', () => {
       expect(restaurantRepository.findOne).toHaveBeenCalledTimes(1);
       expect(restaurantRepository.findOne).toHaveBeenLastCalledWith({
         where: { id: findRestaurantByIdArgs.restaurantId },
+        relations: { menu: true },
       });
       expect(result).toMatchObject({
         ok: false,
@@ -482,6 +486,7 @@ describe('RestaurntService', () => {
       expect(restaurantRepository.findOne).toHaveBeenCalledTimes(1);
       expect(restaurantRepository.findOne).toHaveBeenLastCalledWith({
         where: { id: findRestaurantByIdArgs.restaurantId },
+        relations: { menu: true },
       });
       expect(result).toMatchObject({ ok: true, restaurant: mockedRestaurant });
     });
