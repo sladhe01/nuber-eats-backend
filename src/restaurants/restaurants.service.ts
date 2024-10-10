@@ -116,7 +116,7 @@ export class RestaurantService {
           error: "You can't delete a restaurant that you don't own",
         };
       }
-      await this.restaurants.delete(restaurantId);
+      await this.restaurants.softDelete(restaurantId);
       return { ok: true };
     } catch (error) {
       return { ok: false, error: 'Could not delete' };
@@ -169,7 +169,11 @@ export class RestaurantService {
   }: RestaurantsInput): Promise<RestaurantsOutput> {
     try {
       const [results, totalResults] =
-        await this.restaurants.pagenatedFindAndCount({ page, take });
+        await this.restaurants.pagenatedFindAndCount({
+          page,
+          take,
+          relations: { menu: true },
+        });
       const totalPages = Math.ceil(totalResults / take);
       return { ok: true, results, totalPages, totalResults };
     } catch (error) {
@@ -205,6 +209,7 @@ export class RestaurantService {
           where: { name: ILike(`%${query}%`) },
           take,
           page,
+          relations: { menu: true },
         });
       if (restaurants.length === 0) {
         return { ok: false, error: 'Not found restaurant' };
@@ -259,7 +264,7 @@ export class RestaurantService {
           error: "You can't delete dish of restaurant that you don't own",
         };
       }
-      await this.dishes.delete(dishId);
+      await this.dishes.softDelete(dishId);
       return { ok: true };
     } catch (error) {
       return { ok: false, error: 'Could not delete dish' };

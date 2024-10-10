@@ -51,18 +51,16 @@ describe('RestaurantModule (e2e)', () => {
     categoryRepository = module.get(CategoryRepository);
     await app.init();
     //토큰과 hashpassword 때문에 유저는 graphQL 요청으로 직접 생성
-    await Promise.all(
-      testUsers.map(async (user) => {
-        await publicTest(`
-          mutation {
-            createAccount(email: "${user.email}", password: "${user.password}", role: ${user.role}) {
-              ok
-              error
-            }
-          }
-        `);
-      }),
-    );
+    for (const user of testUsers) {
+      await publicTest(`
+      mutation {
+        createAccount(email: "${user.email}", password: "${user.password}", role: ${user.role}) {
+          ok
+          error
+        }
+      }
+    `);
+    }
     //카테고리, 식당 더미데이터 생성
     const categories = [
       {
@@ -93,6 +91,7 @@ describe('RestaurantModule (e2e)', () => {
       };
       await restaurantRepository.save(seaFoodRestaurant);
     }
+    //todo: 식당에 메뉴 추가하고 restaurant 검색 시 결과 반영되도록 restaurants, restaurant 부분 수정
   });
 
   afterAll(async () => {
@@ -470,6 +469,18 @@ describe('RestaurantModule (e2e)', () => {
             totalResults
             results {
               name
+              menu {
+                name
+                id
+                price
+                options {
+                  name
+                  choices {
+                    name
+                    extra
+                  }
+                }
+              }
             }
           }
         }
@@ -500,6 +511,18 @@ describe('RestaurantModule (e2e)', () => {
             restaurant {
               id
               name
+              menu {
+                name
+                id
+                price
+                options {
+                  name
+                  choices {
+                    name
+                    extra
+                  }
+                }
+              }
             }
           }
         }

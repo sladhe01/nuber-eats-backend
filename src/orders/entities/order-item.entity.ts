@@ -1,7 +1,17 @@
 import { Field, InputType, ObjectType } from '@nestjs/graphql';
 import { CoreEntity } from 'src/common/entities/core.entity';
-import { Dish, DishOption } from 'src/restaurants/entities/dish.entity';
+import { Dish, DishChoice } from 'src/restaurants/entities/dish.entity';
 import { Column, Entity, ManyToOne } from 'typeorm';
+
+@InputType('OrderItemOptionInputType')
+@ObjectType()
+export class OrderItemOption {
+  @Field(() => String)
+  name: string;
+
+  @Field(() => [DishChoice])
+  choices: DishChoice[];
+}
 
 @InputType('OrderItemInputType')
 @ObjectType()
@@ -12,6 +22,6 @@ export class OrderItem extends CoreEntity {
   dish: Dish;
 
   @Column({ type: 'json', nullable: true })
-  @Field(() => [DishOption], { nullable: true })
-  options?: DishOption[];
+  @Field(() => [OrderItemOption], { nullable: true })
+  options?: OrderItemOption[];
 }
