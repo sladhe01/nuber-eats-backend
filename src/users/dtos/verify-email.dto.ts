@@ -5,7 +5,6 @@ import { Verification } from '../entities/verification.entity';
 @ObjectType()
 export class VerifyEmailOutput extends CoreOutput {}
 
-@ObjectType()
 @ArgsType()
 export class VerifyEmailInput extends PickType(
   Verification,

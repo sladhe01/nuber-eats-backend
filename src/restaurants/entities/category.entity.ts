@@ -1,10 +1,10 @@
-import { ArgsType, Field, ObjectType } from '@nestjs/graphql';
+import { Field, InputType, ObjectType } from '@nestjs/graphql';
 import { IsString } from 'class-validator';
 import { CoreEntity } from 'src/common/entities/core.entity';
 import { Column, Entity, OneToMany } from 'typeorm';
 import { Restaurant } from './restaurant.entity';
 
-@ArgsType()
+@InputType('CategoryInputType')
 @ObjectType()
 @Entity()
 export class Category extends CoreEntity {

@@ -5,25 +5,44 @@ import { RestaurantRepository } from './repositories/restaurant.repository';
 import { User } from 'src/users/entities/user.entity';
 import { Restaurant } from './entities/restaurant.entity';
 import { Category } from './entities/category.entity';
-import { find } from 'rxjs';
-import { ILike } from 'typeorm';
+import { ILike, Repository } from 'typeorm';
+import { getRepositoryToken } from '@nestjs/typeorm';
+import { Dish } from './entities/dish.entity';
 
 jest.mock('./repositories/category.repository');
 jest.mock('./repositories/restaurant.repository');
+
+const mockRepository = () => ({
+  create: jest.fn(),
+  findOne: jest.fn(),
+  save: jest.fn(),
+  sofotDelete: jest.fn(),
+});
+
+type MockRepository<T> = Partial<Record<keyof Repository<T>, jest.Mock>>;
 
 describe('RestaurntService', () => {
   let service: RestaurantService;
   let restaurantRepository: jest.Mocked<RestaurantRepository>;
   let categoryRepository: jest.Mocked<CategoryRepository>;
+  let dishRepsitory: MockRepository<Dish>;
 
   beforeEach(async () => {
     const module = await Test.createTestingModule({
-      providers: [RestaurantService, RestaurantRepository, CategoryRepository],
+      providers: [
+        RestaurantService,
+        RestaurantRepository,
+        CategoryRepository,
+        { provide: getRepositoryToken(Dish), useValue: mockRepository() },
+      ],
     }).compile();
 
     service = module.get<RestaurantService>(RestaurantService);
-    restaurantRepository = module.get(RestaurantRepository);
-    categoryRepository = module.get(CategoryRepository);
+    restaurantRepository =
+      module.get<jest.Mocked<RestaurantRepository>>(RestaurantRepository);
+    categoryRepository =
+      module.get<jest.Mocked<CategoryRepository>>(CategoryRepository);
+    dishRepsitory = module.get<MockRepository<Dish>>(getRepositoryToken(Dish));
   });
 
   it('should be defined', () => {
@@ -314,8 +333,8 @@ describe('RestaurntService', () => {
       expect(restaurantRepository.findOne).toHaveBeenCalledWith({
         where: { id: deleteRestaurantArgs.restaurantId },
       });
-      expect(restaurantRepository.delete).toHaveBeenCalledTimes(1);
-      expect(restaurantRepository.delete).toHaveBeenCalledWith(
+      expect(restaurantRepository.softDelete).toHaveBeenCalledTimes(1);
+      expect(restaurantRepository.softDelete).toHaveBeenCalledWith(
         deleteRestaurantArgs.restaurantId,
       );
       expect(result).toMatchObject({ ok: true });
@@ -456,7 +475,10 @@ describe('RestaurntService', () => {
 
   describe('findRestaurantById', () => {
     const findRestaurantByIdArgs = { restaurantId: 1 };
-    const mockedRestaurant = { id: 1, name: 'test-restaurant' };
+    const mockedRestaurant = {
+      id: 1,
+      name: 'test-restaurant',
+    };
     it('should fail if restaurant is not found', async () => {
       jest.spyOn(restaurantRepository, 'findOne').mockResolvedValue(null);
 
@@ -465,6 +487,7 @@ describe('RestaurntService', () => {
       expect(restaurantRepository.findOne).toHaveBeenCalledTimes(1);
       expect(restaurantRepository.findOne).toHaveBeenLastCalledWith({
         where: { id: findRestaurantByIdArgs.restaurantId },
+        relations: { menu: true },
       });
       expect(result).toMatchObject({
         ok: false,
@@ -482,6 +505,7 @@ describe('RestaurntService', () => {
       expect(restaurantRepository.findOne).toHaveBeenCalledTimes(1);
       expect(restaurantRepository.findOne).toHaveBeenLastCalledWith({
         where: { id: findRestaurantByIdArgs.restaurantId },
+        relations: { menu: true },
       });
       expect(result).toMatchObject({ ok: true, restaurant: mockedRestaurant });
     });
@@ -519,6 +543,7 @@ describe('RestaurntService', () => {
         where: { name: ILike(`%${searchRestaurantByNameArgs.query}%`) },
         take: searchRestaurantByNameArgs.take,
         page: searchRestaurantByNameArgs.page,
+        relations: { menu: true },
       });
       expect(result).toMatchObject({
         ok: false,
@@ -542,6 +567,7 @@ describe('RestaurntService', () => {
         where: { name: ILike(`%${searchRestaurantByNameArgs.query}%`) },
         take: searchRestaurantByNameArgs.take,
         page: searchRestaurantByNameArgs.page,
+        relations: { menu: true },
       });
       expect(result).toMatchObject({
         ok: true,
