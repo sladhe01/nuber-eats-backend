@@ -2,7 +2,7 @@ import { Test } from '@nestjs/testing';
 import { RestaurantService } from './restaurants.service';
 import { CategoryRepository } from './repositories/category.repository';
 import { RestaurantRepository } from './repositories/restaurant.repository';
-import { User } from 'src/users/entities/user.entity';
+import { User, UserRole } from 'src/users/entities/user.entity';
 import { Restaurant } from './entities/restaurant.entity';
 import { Category } from './entities/category.entity';
 import { ILike, Repository } from 'typeorm';
@@ -16,7 +16,7 @@ const mockRepository = () => ({
   create: jest.fn(),
   findOne: jest.fn(),
   save: jest.fn(),
-  sofotDelete: jest.fn(),
+  softDelete: jest.fn(),
 });
 
 type MockRepository<T> = Partial<Record<keyof Repository<T>, jest.Mock>>;
@@ -25,7 +25,7 @@ describe('RestaurntService', () => {
   let service: RestaurantService;
   let restaurantRepository: jest.Mocked<RestaurantRepository>;
   let categoryRepository: jest.Mocked<CategoryRepository>;
-  let dishRepsitory: MockRepository<Dish>;
+  let dishRepository: MockRepository<Dish>;
 
   beforeEach(async () => {
     const module = await Test.createTestingModule({
@@ -42,7 +42,7 @@ describe('RestaurntService', () => {
       module.get<jest.Mocked<RestaurantRepository>>(RestaurantRepository);
     categoryRepository =
       module.get<jest.Mocked<CategoryRepository>>(CategoryRepository);
-    dishRepsitory = module.get<MockRepository<Dish>>(getRepositoryToken(Dish));
+    dishRepository = module.get<MockRepository<Dish>>(getRepositoryToken(Dish));
   });
 
   it('should be defined', () => {
@@ -50,7 +50,7 @@ describe('RestaurntService', () => {
   });
 
   describe('createRestaurant', () => {
-    const mockedOwner = { id: 1, role: 'Client' };
+    const mockedOwner = { id: 1, role: UserRole.Client };
     const createRestaurantArgs = {
       name: 'mockingRestaurant',
       coverImg: 'http://',
@@ -135,7 +135,7 @@ describe('RestaurntService', () => {
   });
 
   describe('editRestaurant', () => {
-    const mockedOwner = { id: 1, role: 'Client' };
+    const mockedOwner = { id: 1, role: UserRole.Client };
     const editRestaurantArgs = {
       name: 'mockingRestaurant2',
       coverImg: 'http://2',
@@ -270,7 +270,7 @@ describe('RestaurntService', () => {
   });
 
   describe('deleteRestaurant', () => {
-    const mockedUser = { id: 1, role: 'Client' };
+    const mockedUser = { id: 1, role: UserRole.Client };
     const deleteRestaurantArgs = { restaurantId: 1 };
     const mockedRestaurant = {
       id: 1,
@@ -590,6 +590,286 @@ describe('RestaurntService', () => {
         ok: false,
         error: 'Could not search for restaurants',
       });
+    });
+  });
+
+  describe('createDish', () => {
+    const mockedOwner = {
+      id: 1,
+      email: 'test@owner.com',
+      role: UserRole.Owner,
+    };
+    const mockedRestaurant = { id: 1, ownerId: 1 };
+    const createDishArgs = {
+      restaurantId: 1,
+      name: 'pepperoni pizza',
+      photo: 'https://pizza.jpeg',
+      price: 10000,
+      description: 'NY pepperoni pizza',
+      options: [
+        {
+          name: 'size',
+          choices: [
+            { name: 'S', extra: 0 },
+            { name: 'M', extra: 3000 },
+            { name: 'L', extra: 5000 },
+          ],
+          allowMultipleChoices: false,
+          required: true,
+        },
+        {
+          name: 'topping',
+          allowMultipleChoices: true,
+          required: false,
+          choices: [
+            { name: 'extra cheese', extra: 2000 },
+            { name: 'extra pepperoni', extra: 3000 },
+          ],
+        },
+      ],
+    };
+    it('should fail if restaurant is not found', async () => {
+      jest.spyOn(restaurantRepository, 'findOne').mockResolvedValue(null);
+
+      const result = await service.createDish(
+        mockedOwner as User,
+        createDishArgs,
+      );
+
+      expect(restaurantRepository.findOne).toHaveBeenCalledTimes(1);
+      expect(restaurantRepository.findOne).toHaveBeenCalledWith({
+        where: { id: createDishArgs.restaurantId },
+      });
+      expect(result).toMatchObject({
+        ok: false,
+        error: 'Restaurant not found',
+      });
+    });
+
+    it("should fail if the restaurant is not owner's restaurant", async () => {
+      const anotherMockedRestaurant = { id: 2, ownerId: 2 };
+      jest
+        .spyOn(restaurantRepository, 'findOne')
+        .mockResolvedValue(anotherMockedRestaurant as Restaurant);
+
+      const result = await service.createDish(
+        mockedOwner as User,
+        createDishArgs,
+      );
+
+      expect(restaurantRepository.findOne).toHaveBeenCalledTimes(1);
+      expect(restaurantRepository.findOne).toHaveBeenCalledWith({
+        where: { id: createDishArgs.restaurantId },
+      });
+      expect(result).toMatchObject({
+        ok: false,
+        error: "You can't add a dish to this restaurant that you don't own",
+      });
+    });
+
+    it('should create dish', async () => {
+      jest
+        .spyOn(restaurantRepository, 'findOne')
+        .mockResolvedValue(mockedRestaurant as Restaurant);
+      dishRepository.create.mockReturnValue(createDishArgs);
+      dishRepository.save.mockResolvedValue(createDishArgs);
+
+      const result = await service.createDish(
+        mockedOwner as User,
+        createDishArgs,
+      );
+
+      expect(restaurantRepository.findOne).toHaveBeenCalledTimes(1);
+      expect(restaurantRepository.findOne).toHaveBeenCalledWith({
+        where: { id: createDishArgs.restaurantId },
+      });
+      expect(dishRepository.create).toHaveBeenCalledTimes(1);
+      expect(dishRepository.create).toHaveBeenCalledWith({
+        ...createDishArgs,
+        restaurant: mockedRestaurant,
+      });
+      expect(dishRepository.save).toHaveBeenCalledTimes(1);
+      expect(dishRepository.save).toHaveBeenCalledWith(createDishArgs);
+      expect(result).toMatchObject({ ok: true });
+    });
+
+    it('should fail on exception', async () => {
+      jest
+        .spyOn(restaurantRepository, 'findOne')
+        .mockRejectedValue(new Error());
+
+      const result = await service.createDish(
+        mockedOwner as User,
+        createDishArgs,
+      );
+
+      expect(result).toMatchObject({
+        ok: false,
+        error: 'Could not craete dish',
+      });
+    });
+  });
+
+  describe('deleteDish', () => {
+    const mockedOwner = {
+      id: 1,
+      email: 'test@owner.com',
+      role: UserRole.Owner,
+    } as User;
+    const deleteDishArgs = { dishId: 1 };
+    const mockedRestaurant = { id: 1, ownerId: 1 } as Restaurant;
+    const mockedDish = {
+      id: 1,
+      name: 'pizza',
+      price: 10000,
+      description: 'delicious',
+      restaurant: mockedRestaurant,
+    } as Dish;
+    it('should fail if dish is not found', async () => {
+      dishRepository.findOne.mockResolvedValue(null);
+
+      const result = await service.deleteDish(mockedOwner, deleteDishArgs);
+
+      expect(dishRepository.findOne).toHaveBeenCalledTimes(1);
+      expect(dishRepository.findOne).toHaveBeenCalledWith({
+        where: { id: deleteDishArgs.dishId },
+        relations: { restaurant: true },
+      });
+      expect(result).toMatchObject({ ok: false, error: 'Dish not found' });
+    });
+
+    it("should fail if the restaurant is not owner's restaurant", async () => {
+      const anotherRestaurant = { id: 2, ownerId: 2 } as Restaurant;
+      const anotherMockedDish = {
+        id: 2,
+        name: 'chicken',
+        price: 10000,
+        description: 'amazing',
+        restaurant: anotherRestaurant,
+      } as Dish;
+      dishRepository.findOne.mockResolvedValue(anotherMockedDish);
+
+      const result = await service.deleteDish(mockedOwner, deleteDishArgs);
+
+      expect(dishRepository.findOne).toHaveBeenCalledTimes(1);
+      expect(dishRepository.findOne).toHaveBeenCalledWith({
+        where: { id: deleteDishArgs.dishId },
+        relations: { restaurant: true },
+      });
+      expect(result).toMatchObject({
+        ok: false,
+        error: "You can't delete dish of restaurant that you don't own",
+      });
+    });
+
+    it('should delete dish', async () => {
+      dishRepository.findOne.mockResolvedValue(mockedDish);
+      dishRepository.softDelete.mockResolvedValue(expect.any(Object));
+
+      const result = await service.deleteDish(mockedOwner, deleteDishArgs);
+
+      expect(dishRepository.findOne).toHaveBeenCalledTimes(1);
+      expect(dishRepository.findOne).toHaveBeenCalledWith({
+        where: { id: deleteDishArgs.dishId },
+        relations: { restaurant: true },
+      });
+      expect(dishRepository.softDelete).toHaveBeenCalledTimes(1);
+      expect(dishRepository.softDelete).toHaveBeenLastCalledWith(
+        deleteDishArgs.dishId,
+      );
+      expect(result).toMatchObject({ ok: true });
+    });
+
+    it('should fail on exception', async () => {
+      dishRepository.findOne.mockRejectedValue(new Error());
+
+      const result = await service.deleteDish(mockedOwner, deleteDishArgs);
+
+      expect(result).toMatchObject({
+        ok: false,
+        error: 'Could not delete dish',
+      });
+    });
+  });
+
+  describe('editDish', () => {
+    const mockedOwner = {
+      id: 1,
+      email: 'test@owner.com',
+      role: UserRole.Owner,
+    } as User;
+    const editDishArgs = { price: 12000, dishId: 1 };
+    const mockedRestaurant = { id: 1, ownerId: 1 } as Restaurant;
+    const mockedDish = {
+      id: 1,
+      name: 'pizza',
+      price: 10000,
+      description: 'delicious',
+      restaurant: mockedRestaurant,
+    } as Dish;
+
+    it('should fail if dish is not found', async () => {
+      dishRepository.findOne.mockResolvedValue(null);
+
+      const result = await service.editDish(mockedOwner, editDishArgs);
+
+      expect(dishRepository.findOne).toHaveBeenCalledTimes(1);
+      expect(dishRepository.findOne).toHaveBeenCalledWith({
+        where: { id: editDishArgs.dishId },
+        relations: { restaurant: true },
+      });
+      expect(result).toMatchObject({ ok: false, error: 'Dish not found' });
+    });
+
+    it("should fail if the restaurant is not owner's restaurant", async () => {
+      const anotherRestaurant = { id: 2, ownerId: 2 } as Restaurant;
+      const anotherMockedDish = {
+        id: 2,
+        name: 'chicken',
+        price: 10000,
+        description: 'amazing',
+        restaurant: anotherRestaurant,
+      } as Dish;
+      dishRepository.findOne.mockResolvedValue(anotherMockedDish);
+
+      const result = await service.editDish(mockedOwner, editDishArgs);
+
+      expect(dishRepository.findOne).toHaveBeenCalledTimes(1);
+      expect(dishRepository.findOne).toHaveBeenCalledWith({
+        where: { id: editDishArgs.dishId },
+        relations: { restaurant: true },
+      });
+      expect(result).toMatchObject({
+        ok: false,
+        error: "You can't edit dish of restaurant that you don't own",
+      });
+    });
+
+    it('should edit dish', async () => {
+      dishRepository.findOne.mockResolvedValue(mockedDish);
+      dishRepository.save.mockResolvedValue(expect.any(Object));
+
+      const result = await service.editDish(mockedOwner, editDishArgs);
+
+      expect(dishRepository.findOne).toHaveBeenCalledTimes(1);
+      expect(dishRepository.findOne).toHaveBeenCalledWith({
+        where: { id: editDishArgs.dishId },
+        relations: { restaurant: true },
+      });
+      expect(dishRepository.save).toHaveBeenCalledTimes(1);
+      expect(dishRepository.save).toHaveBeenLastCalledWith({
+        id: editDishArgs.dishId,
+        ...editDishArgs,
+      });
+      expect(result).toMatchObject({ ok: true });
+    });
+
+    it('should fail on exception', async () => {
+      dishRepository.findOne.mockRejectedValue(new Error());
+
+      const result = await service.editDish(mockedOwner, editDishArgs);
+
+      expect(result).toMatchObject({ ok: false, error: 'Could not edit dish' });
     });
   });
 });
