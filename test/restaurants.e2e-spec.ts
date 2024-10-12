@@ -33,7 +33,7 @@ describe('RestaurantModule (e2e)', () => {
   let jwtToken: string;
   let clientToken: string;
   let owner1Token: string;
-  let owner2Toekn: string;
+  let owner2Token: string;
 
   const baseTest = () => request(app.getHttpServer()).post(GRAPHQL_ENDPOINT);
   const publicTest = (query: string) => baseTest().send({ query });
@@ -91,7 +91,6 @@ describe('RestaurantModule (e2e)', () => {
       };
       await restaurantRepository.save(seaFoodRestaurant);
     }
-    //todo: 식당에 메뉴 추가하고 restaurant 검색 시 결과 반영되도록 restaurants, restaurant 부분 수정
   });
 
   afterAll(async () => {
@@ -215,8 +214,8 @@ describe('RestaurantModule (e2e)', () => {
           }
         }
       `);
-      owner2Toekn = loginResponse.body.data.login.token;
-      jwtToken = owner2Toekn;
+      owner2Token = loginResponse.body.data.login.token;
+      jwtToken = owner2Token;
       //owner2로 owner1의 레스토랑 수정
       return privateTest(`
         mutation {
@@ -304,7 +303,7 @@ describe('RestaurantModule (e2e)', () => {
   describe('deleteRestaurant', () => {
     it("should fail if accessed user is not restaurant's owner", async () => {
       //owner2로 로그인
-      jwtToken = owner2Toekn;
+      jwtToken = owner2Token;
       //restaurant 삭제 실패
       return privateTest(`
         mutation {
@@ -552,6 +551,19 @@ describe('RestaurantModule (e2e)', () => {
             restaurant {
               id
               name
+              menu {
+                name
+                id
+                price
+                options {
+                  name
+                  choices {
+                    name
+                    extra
+                  }
+                }
+              }
+              
             }
           }
         }
@@ -582,6 +594,18 @@ describe('RestaurantModule (e2e)', () => {
             restaurants {
               id
               name
+              menu {
+                name
+                id
+                price
+                options {
+                  name
+                  choices {
+                    name
+                    extra
+                  }
+                }
+              }
             }
           }
         }
@@ -612,6 +636,18 @@ describe('RestaurantModule (e2e)', () => {
             restaurants {
               id
               name
+              menu {
+                name
+                id
+                price
+                options {
+                  name
+                  choices {
+                    name
+                    extra
+                  }
+                }
+              }
             }
           }
         }
@@ -628,6 +664,351 @@ describe('RestaurantModule (e2e)', () => {
           expect(searchRestaurant.totalPages).toBe(null);
           expect(searchRestaurant.totalResults).toBe(null);
           expect(searchRestaurant.restaurants).toBe(null);
+        });
+    });
+  });
+
+  describe('CreateDish', () => {
+    it('should fail if restaurant is not found', async () => {
+      return privateTest(`
+        mutation {
+          createDish(
+            name: "pizza"
+            price: 10000
+            description: "so delicious"
+            options: [
+              {
+                name: "flavor"
+                choices: [{name:"hot", extra:500},{name:"mild"}]
+                allowMultipleChoices: false
+                required: true
+              },
+              {name:"topping"
+              choices:[{name:"pepper", extra:500}, {name:"spice",extra:500}]
+                allowMultipleChoices:true
+                required:false
+              }
+            ]       
+            restaurantId: 100
+          ) {
+            ok
+            error
+          }
+        }        
+        `)
+        .expect(200)
+        .expect((res) => {
+          const {
+            body: {
+              data: {
+                createDish: { ok, error },
+              },
+            },
+          } = res;
+          expect(ok).toBe(false);
+          expect(error).toBe('Restaurant not found');
+        });
+    });
+
+    it("should fail if accessed user is not restaurant's owner", async () => {
+      //owner2로 로그인
+      jwtToken = owner2Token;
+
+      return privateTest(`
+        mutation {
+          createDish(
+            name: "pizza"
+            price: 10000
+            description: "so delicious"
+            options: [
+              {
+                name: "flavor"
+                choices: [{name:"hot", extra:500},{name:"mild"}]
+                allowMultipleChoices: false
+                required: true
+              },
+              {name:"topping"
+              choices:[{name:"pepper", extra:500}, {name:"spice",extra:500}]
+                allowMultipleChoices:true
+                required:false
+              }
+            ]       
+            restaurantId: 1
+          ) {
+            ok
+            error
+          }
+        }        
+        `)
+        .expect(200)
+        .expect((res) => {
+          const {
+            body: {
+              data: {
+                createDish: { ok, error },
+              },
+            },
+          } = res;
+          expect(ok).toBe(false);
+          expect(error).toBe(
+            "You can't add a dish to this restaurant that you don't own",
+          );
+        });
+    });
+
+    it('should create dish', async () => {
+      return privateTest(`
+        mutation {
+          createDish(
+            name: "pizza"
+            price: 10000
+            description: "so delicious"
+            options: [
+              {
+                name: "flavor"
+                choices: [{name:"hot", extra:500},{name:"mild"}]
+                allowMultipleChoices: false
+                required: true
+              },
+              {name:"topping"
+              choices:[{name:"pepper", extra:500}, {name:"spice",extra:500}]
+                allowMultipleChoices:true
+                required:false
+              }
+            ]       
+            restaurantId: 16
+          ) {
+            ok
+            error
+          }
+        }        
+        `)
+        .expect(200)
+        .expect((res) => {
+          const {
+            body: {
+              data: {
+                createDish: { ok, error },
+              },
+            },
+          } = res;
+          expect(ok).toBe(true);
+          expect(error).toBe(null);
+        });
+    });
+  });
+
+  describe('editDish', () => {
+    it('should fail if dish is not found', async () => {
+      return privateTest(`
+        mutation {
+          editDish(
+            dishId: 2
+            price: 11000
+            options: [
+              {
+                name: "flavor"
+                choices: [{ name: "hot", extra: 1000 }, { name: "mild" }]
+                allowMultipleChoices: false
+                required: true
+              }
+              {
+                name: "topping"
+                choices: [{ name: "pepper", extra: 500 }, { name: "spice", extra: 500 }]
+                allowMultipleChoices: true
+                required: false
+              }
+            ]
+          ) {
+            ok
+            error
+          }
+        }        
+        `)
+        .expect(200)
+        .expect((res) => {
+          const {
+            body: {
+              data: {
+                editDish: { ok, error },
+              },
+            },
+          } = res;
+
+          expect(ok).toBe(false);
+          expect(error).toBe('Dish not found');
+        });
+    });
+
+    it("should fail if accessed user is not restaurant's owner", async () => {
+      //owner1으로 로그인
+      jwtToken = owner1Token;
+
+      return privateTest(`
+        mutation {
+          editDish(
+            dishId: 1
+            price: 11000
+            options: [
+              {
+                name: "flavor"
+                choices: [{ name: "hot", extra: 1000 }, { name: "mild" }]
+                allowMultipleChoices: false
+                required: true
+              }
+              {
+                name: "topping"
+                choices: [{ name: "pepper", extra: 500 }, { name: "spice", extra: 500 }]
+                allowMultipleChoices: true
+                required: false
+              }
+            ]
+          ) {
+            ok
+            error
+          }
+        }        
+        `)
+        .expect(200)
+        .expect((res) => {
+          const {
+            body: {
+              data: {
+                editDish: { ok, error },
+              },
+            },
+          } = res;
+
+          expect(ok).toBe(false);
+          expect(error).toBe(
+            "You can't edit dish of restaurant that you don't own",
+          );
+        });
+    });
+
+    it('should edit dish', async () => {
+      //owner2로 로그인
+      jwtToken = owner2Token;
+
+      return privateTest(`
+        mutation {
+          editDish(
+            dishId: 1
+            price: 11000
+            options: [
+              {
+                name: "flavor"
+                choices: [{ name: "hot", extra: 1000 }, { name: "mild" }]
+                allowMultipleChoices: false
+                required: true
+              }
+              {
+                name: "topping"
+                choices: [{ name: "pepper", extra: 500 }, { name: "spice", extra: 500 }]
+                allowMultipleChoices: true
+                required: false
+              }
+            ]
+          ) {
+            ok
+            error
+          }
+        }        
+        `)
+        .expect(200)
+        .expect((res) => {
+          const {
+            body: {
+              data: {
+                editDish: { ok, error },
+              },
+            },
+          } = res;
+
+          expect(ok).toBe(true);
+          expect(error).toBe(null);
+        });
+    });
+  });
+
+  describe('deleteDish', () => {
+    it('should fail if dish is not found', async () => {
+      return privateTest(`
+          mutation {
+            deleteDish(dishId:2) {
+              ok
+              error
+            }
+          }        
+          `)
+        .expect(200)
+        .expect((res) => {
+          const {
+            body: {
+              data: {
+                deleteDish: { ok, error },
+              },
+            },
+          } = res;
+
+          expect(ok).toBe(false);
+          expect(error).toBe('Dish not found');
+        });
+    });
+
+    it("should fail if accessed user is not restaurant's owner", async () => {
+      //owner1으로 로그인
+      jwtToken = owner1Token;
+
+      return privateTest(`
+          mutation {
+            deleteDish(dishId:1) {
+              ok
+              error
+            }
+          }        
+          `)
+        .expect(200)
+        .expect((res) => {
+          const {
+            body: {
+              data: {
+                deleteDish: { ok, error },
+              },
+            },
+          } = res;
+
+          expect(ok).toBe(false);
+          expect(error).toBe(
+            "You can't delete dish of restaurant that you don't own",
+          );
+        });
+    });
+
+    it('should delete dish', async () => {
+      //owner2로 로그인
+      jwtToken = owner2Token;
+
+      return privateTest(`
+          mutation {
+            deleteDish(dishId:1) {
+              ok
+              error
+            }
+          }        
+          `)
+        .expect(200)
+        .expect((res) => {
+          const {
+            body: {
+              data: {
+                deleteDish: { ok, error },
+              },
+            },
+          } = res;
+
+          expect(ok).toBe(true);
+          expect(error).toBe(null);
         });
     });
   });
