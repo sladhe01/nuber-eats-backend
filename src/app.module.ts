@@ -1,9 +1,4 @@
-import {
-  MiddlewareConsumer,
-  Module,
-  NestModule,
-  RequestMethod,
-} from '@nestjs/common';
+import { MiddlewareConsumer, Module, RequestMethod } from '@nestjs/common';
 import * as Joi from 'joi';
 import { GraphQLModule } from '@nestjs/graphql';
 import { ApolloDriver, ApolloDriverConfig } from '@nestjs/apollo';
@@ -23,6 +18,8 @@ import { Dish } from './restaurants/entities/dish.entity';
 import { OrdersModule } from './orders/orders.module';
 import { Order } from './orders/entities/order.entity';
 import { OrderItem } from './orders/entities/order-item.entity';
+import { JwtService } from './jwt/jwt.service';
+import { UserService } from './users/users.service';
 
 @Module({
   imports: [
@@ -43,12 +40,43 @@ import { OrderItem } from './orders/entities/order-item.entity';
         MAILGUN_FROM_EMAIL: Joi.string().required(),
       }),
     }),
-    GraphQLModule.forRoot<ApolloDriverConfig>({
+    GraphQLModule.forRootAsync<ApolloDriverConfig>({
+      imports: [JwtModule, UsersModule],
       driver: ApolloDriver,
-      autoSchemaFile: true,
-      context: async ({ req }) => {
-        return { user: req['user'] };
-      },
+      useFactory: async (jwtService: JwtService, userService: UserService) => ({
+        autoSchemaFile: true,
+        context: async ({ req, extra }) => {
+          if (req) {
+            return { user: req['user'] };
+          } else if (extra) {
+            return { user: extra['user'] };
+          }
+        },
+        subscriptions: {
+          'graphql-ws': {
+            onConnect: async ({ extra, connectionParams }) => {
+              try {
+                if ('x-jwt' in connectionParams) {
+                  const token = connectionParams['x-jwt'].toString();
+                  const decoded = jwtService.verify(token);
+                  if (
+                    typeof decoded === 'object' &&
+                    decoded.hasOwnProperty('id')
+                  ) {
+                    const { user, ok } = await userService.findById(
+                      decoded['id'],
+                    );
+                    if (ok) {
+                      extra['user'] = user;
+                    }
+                  }
+                }
+              } catch (e) {}
+            },
+          },
+        },
+      }),
+      inject: [JwtService, UserService],
     }),
     TypeOrmModule.forRoot({
       type: 'postgres',
@@ -85,7 +113,7 @@ import { OrderItem } from './orders/entities/order-item.entity';
   controllers: [],
   providers: [],
 })
-export class AppModule implements NestModule {
+export class AppModule {
   configure(consumer: MiddlewareConsumer) {
     consumer
       .apply(JwtMiddleware)
