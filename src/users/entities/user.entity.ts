@@ -62,7 +62,6 @@ export class User extends CoreEntity {
       try {
         this.password = await bcrypt.hash(this.password, 10);
       } catch (e) {
-        console.log(e);
         throw new InternalServerErrorException(); // 여기서 발생한 에러는 service.ts에 repostory가 inject 되기 때문에 거기서 처리해준다
       }
     }
@@ -72,7 +71,6 @@ export class User extends CoreEntity {
     try {
       return await bcrypt.compare(password, this.password);
     } catch (e) {
-      console.log(e);
       throw new InternalServerErrorException(); // 여기서 발생한 에러는 service.ts에 repostory가 inject 되기 때문에 거기서 처리해준다
     }
   }
