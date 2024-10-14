@@ -42,42 +42,33 @@ import { CommonModule } from './common/common.module';
       }),
     }),
     GraphQLModule.forRootAsync<ApolloDriverConfig>({
-      imports: [JwtModule, UsersModule],
+      imports: [JwtModule],
+      inject: [JwtMiddleware],
       driver: ApolloDriver,
-      useFactory: async (jwtService: JwtService, userService: UserService) => ({
+      useFactory: async (jwtMiddleware: JwtMiddleware) => ({
         autoSchemaFile: true,
         context: async ({ req, extra }) => {
           if (req) {
             return { user: req['user'] };
           } else if (extra) {
-            return { user: extra['user'] };
+            return { user: extra.request.user };
           }
         },
         subscriptions: {
           'graphql-ws': {
-            onConnect: async ({ extra, connectionParams }) => {
+            onConnect: async (context) => {
+              const { connectionParams, extra } = context;
               try {
-                if ('x-jwt' in connectionParams) {
-                  const token = connectionParams['x-jwt'].toString();
-                  const decoded = jwtService.verify(token);
-                  if (
-                    typeof decoded === 'object' &&
-                    decoded.hasOwnProperty('id')
-                  ) {
-                    const { user, ok } = await userService.findById(
-                      decoded['id'],
-                    );
-                    if (ok) {
-                      extra['user'] = user;
-                    }
-                  }
+                if (extra['request'] && connectionParams) {
+                  const req = extra['request'];
+                  req.headers['x-jwt'] = connectionParams['x-jwt'];
+                  await jwtMiddleware.processRequestHeaders(req);
                 }
               } catch (e) {}
             },
           },
         },
       }),
-      inject: [JwtService, UserService],
     }),
     TypeOrmModule.forRoot({
       type: 'postgres',
