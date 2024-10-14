@@ -8,13 +8,16 @@ import { Role } from 'src/auth/role.decorator';
 import { GetOrdersInput, GetOrdersOutput } from './dtos/get-orders.dto';
 import { GetOrderInput, GetOrderOutput } from './dtos/get-order.dto';
 import { EditOrderInput, EditOrderOutput } from './dtos/edit-order.dto';
+import { PUB_SUB } from 'src/common/common.constants';
 import { PubSub } from 'graphql-subscriptions';
-
-const pubsub = new PubSub();
+import { Inject } from '@nestjs/common';
 
 @Resolver(() => Order)
 export class OrderResolver {
-  constructor(private readonly orderService: OrderService) {}
+  constructor(
+    private readonly orderService: OrderService,
+    @Inject(PUB_SUB) private readonly pubsub: PubSub,
+  ) {}
   @Mutation(() => CreateOrderOutput)
   @Role(['Client'])
   createOrder(

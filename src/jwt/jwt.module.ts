@@ -2,6 +2,7 @@ import { DynamicModule, Module } from '@nestjs/common';
 import { JwtService } from './jwt.service';
 import { JwtModuleOptions } from './jwt.interfaces';
 import { CONFIG_OPTIONS } from 'src/common/common.constants';
+import { UsersModule } from 'src/users/users.module';
 
 @Module({})
 export class JwtModule {
@@ -9,8 +10,9 @@ export class JwtModule {
     return {
       module: JwtModule,
       exports: [JwtService],
-      providers: [JwtService, { provide: CONFIG_OPTIONS, useValue: options }],
+      providers: [{ provide: CONFIG_OPTIONS, useValue: options }, JwtService],
       global: options.isGlobal,
+      imports: [UsersModule],
     };
   }
 }

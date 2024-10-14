@@ -20,6 +20,7 @@ import { Order } from './orders/entities/order.entity';
 import { OrderItem } from './orders/entities/order-item.entity';
 import { JwtService } from './jwt/jwt.service';
 import { UserService } from './users/users.service';
+import { CommonModule } from './common/common.module';
 
 @Module({
   imports: [
@@ -109,6 +110,7 @@ import { UserService } from './users/users.service';
     UsersModule,
     RestaurantsModule,
     OrdersModule,
+    CommonModule,
   ],
   controllers: [],
   providers: [],
