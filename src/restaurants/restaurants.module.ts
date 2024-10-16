@@ -22,5 +22,6 @@ import { Dish } from './entities/dish.entity';
     RestaurantRepository,
     DishResolver,
   ],
+  exports: [RestaurantRepository],
 })
 export class RestaurantsModule {}

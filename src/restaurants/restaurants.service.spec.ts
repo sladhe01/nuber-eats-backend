@@ -66,10 +66,10 @@ describe('RestaurntService', () => {
     const mockedCategory = { id: 1, name: 'korean food', slug: 'korean-food' };
 
     it('should fail if category is not found', async () => {
-      jest
-        .spyOn(restaurantRepository, 'create')
-        .mockReturnValue(mockedRestaurant as Restaurant);
-      jest.spyOn(categoryRepository, 'getCategory').mockResolvedValue(null);
+      restaurantRepository.create.mockReturnValue(
+        mockedRestaurant as Restaurant,
+      );
+      categoryRepository.getCategory.mockResolvedValue(null);
       const result = await service.createRestaurant(
         mockedOwner as User,
         createRestaurantArgs,
@@ -86,15 +86,15 @@ describe('RestaurntService', () => {
     });
 
     it('should create a new restaurant', async () => {
-      jest
-        .spyOn(restaurantRepository, 'create')
-        .mockReturnValue(mockedRestaurant as Restaurant);
-      jest
-        .spyOn(categoryRepository, 'getCategory')
-        .mockResolvedValue(mockedCategory as Category);
-      jest
-        .spyOn(restaurantRepository, 'save')
-        .mockResolvedValue(mockedRestaurant as Restaurant);
+      restaurantRepository.create.mockReturnValue(
+        mockedRestaurant as Restaurant,
+      );
+      categoryRepository.getCategory.mockResolvedValue(
+        mockedCategory as Category,
+      );
+      restaurantRepository.save.mockResolvedValue(
+        mockedRestaurant as Restaurant,
+      );
 
       const result = await service.createRestaurant(
         mockedOwner as User,
@@ -119,7 +119,7 @@ describe('RestaurntService', () => {
     });
 
     it('should fail on exception', async () => {
-      jest.spyOn(restaurantRepository, 'create').mockImplementation(() => {
+      restaurantRepository.create.mockImplementation(() => {
         throw new Error();
       });
 
@@ -151,7 +151,7 @@ describe('RestaurntService', () => {
     };
 
     it('should fail if restaurant is not found', async () => {
-      jest.spyOn(restaurantRepository, 'findOne').mockResolvedValue(null);
+      restaurantRepository.findOne.mockResolvedValue(null);
 
       const result = await service.editRestaurant(
         mockedOwner as User,
@@ -169,9 +169,10 @@ describe('RestaurntService', () => {
     });
 
     it("should fail if restaurant's owner does not matched with accessed user", async () => {
-      jest
-        .spyOn(restaurantRepository, 'findOne')
-        .mockResolvedValue({ ...mockedRestaurant, ownerId: 2 } as Restaurant);
+      restaurantRepository.findOne.mockResolvedValue({
+        ...mockedRestaurant,
+        ownerId: 2,
+      } as Restaurant);
       const result = await service.editRestaurant(
         mockedOwner as User,
         editRestaurantArgs,
@@ -188,10 +189,11 @@ describe('RestaurntService', () => {
     });
 
     it('should fail if a category to edit is not found', async () => {
-      jest
-        .spyOn(restaurantRepository, 'findOne')
-        .mockResolvedValue({ ...mockedRestaurant, ownerId: 1 } as Restaurant);
-      jest.spyOn(categoryRepository, 'getCategory').mockResolvedValue(null);
+      restaurantRepository.findOne.mockResolvedValue({
+        ...mockedRestaurant,
+        ownerId: 1,
+      } as Restaurant);
+      categoryRepository.getCategory.mockResolvedValue(null);
 
       const result = await service.editRestaurant(
         mockedOwner as User,
@@ -221,15 +223,16 @@ describe('RestaurntService', () => {
         address: 'Busan',
         category: mockedCategory,
       };
-      jest
-        .spyOn(restaurantRepository, 'findOne')
-        .mockResolvedValue({ ...mockedRestaurant, ownerId: 1 } as Restaurant);
-      jest
-        .spyOn(categoryRepository, 'getCategory')
-        .mockResolvedValue(mockedCategory as Category);
-      jest
-        .spyOn(restaurantRepository, 'save')
-        .mockResolvedValue(editedRestaurant as Restaurant);
+      restaurantRepository.findOne.mockResolvedValue({
+        ...mockedRestaurant,
+        ownerId: 1,
+      } as Restaurant);
+      categoryRepository.getCategory.mockResolvedValue(
+        mockedCategory as Category,
+      );
+      restaurantRepository.save.mockResolvedValue(
+        editedRestaurant as Restaurant,
+      );
 
       const result = await service.editRestaurant(
         mockedOwner as User,
@@ -254,9 +257,7 @@ describe('RestaurntService', () => {
     });
 
     it('should fail on exception', async () => {
-      jest
-        .spyOn(restaurantRepository, 'findOne')
-        .mockRejectedValue(new Error());
+      restaurantRepository.findOne.mockRejectedValue(new Error());
 
       const result = await service.editRestaurant(
         mockedOwner as User,
@@ -280,7 +281,7 @@ describe('RestaurntService', () => {
     };
 
     it('should fail if restaurant to deleted is not found', async () => {
-      jest.spyOn(restaurantRepository, 'findOne').mockResolvedValue(null);
+      restaurantRepository.findOne.mockResolvedValue(null);
 
       const result = await service.deleteRestaurant(
         mockedUser as User,
@@ -297,9 +298,10 @@ describe('RestaurntService', () => {
       });
     });
     it("should fail if restaurnt's owner is not match with access user", async () => {
-      jest
-        .spyOn(restaurantRepository, 'findOne')
-        .mockResolvedValue({ ...mockedRestaurant, ownerId: 2 } as Restaurant);
+      restaurantRepository.findOne.mockResolvedValue({
+        ...mockedRestaurant,
+        ownerId: 2,
+      } as Restaurant);
 
       const result = await service.deleteRestaurant(
         mockedUser as User,
@@ -317,12 +319,11 @@ describe('RestaurntService', () => {
     });
 
     it('should delete a restaurant', async () => {
-      jest
-        .spyOn(restaurantRepository, 'findOne')
-        .mockResolvedValue({ ...mockedRestaurant, ownerId: 1 } as Restaurant);
-      jest
-        .spyOn(restaurantRepository, 'delete')
-        .mockResolvedValue(expect.any(Object));
+      restaurantRepository.findOne.mockResolvedValue({
+        ...mockedRestaurant,
+        ownerId: 1,
+      } as Restaurant);
+      restaurantRepository.delete.mockResolvedValue(expect.any(Object));
 
       const result = await service.deleteRestaurant(
         mockedUser as User,
@@ -341,9 +342,7 @@ describe('RestaurntService', () => {
     });
 
     it('should fail on exception', async () => {
-      jest
-        .spyOn(restaurantRepository, 'findOne')
-        .mockRejectedValue(new Error());
+      restaurantRepository.findOne.mockRejectedValue(new Error());
 
       const result = await service.deleteRestaurant(
         mockedUser as User,
@@ -356,7 +355,7 @@ describe('RestaurntService', () => {
 
   describe('allCategories', () => {
     it('should fail on exception', async () => {
-      jest.spyOn(categoryRepository, 'find').mockRejectedValue(new Error());
+      categoryRepository.find.mockRejectedValue(new Error());
 
       const result = await service.allCategories();
 
@@ -367,9 +366,7 @@ describe('RestaurntService', () => {
     });
 
     it('should load all categories', async () => {
-      jest
-        .spyOn(categoryRepository, 'find')
-        .mockResolvedValue(expect.any(Array));
+      categoryRepository.find.mockResolvedValue(expect.any(Array));
 
       const result = await service.allCategories();
 
@@ -380,7 +377,7 @@ describe('RestaurntService', () => {
   describe('countRestaurants', () => {
     const mockedCategory = { id: 1 };
     it('should count restaurants match with the category', async () => {
-      jest.spyOn(restaurantRepository, 'count').mockResolvedValue(10);
+      restaurantRepository.count.mockResolvedValue(10);
       const result = await service.countRestaurants(mockedCategory as Category);
       expect(result).toBe(10);
     });
@@ -390,7 +387,7 @@ describe('RestaurntService', () => {
     const findCategoryBySlugArgs = { slug: 'test-food', page: 3, take: 10 };
     const mockedCategory = { id: 1 };
     it('should fail if category is not found ', async () => {
-      jest.spyOn(categoryRepository, 'findOne').mockResolvedValue(null);
+      categoryRepository.findOne.mockResolvedValue(null);
 
       const result = await service.findCategoryBySlug(findCategoryBySlugArgs);
 
@@ -402,12 +399,11 @@ describe('RestaurntService', () => {
     });
 
     it('should load restaurant matching with the category', async () => {
-      jest
-        .spyOn(categoryRepository, 'findOne')
-        .mockResolvedValue(mockedCategory as Category);
-      jest
-        .spyOn(restaurantRepository, 'pagenatedFindAndCount')
-        .mockResolvedValue([expect.any(Array), 25]);
+      categoryRepository.findOne.mockResolvedValue(mockedCategory as Category);
+      restaurantRepository.pagenatedFindAndCount.mockResolvedValue([
+        expect.any(Array),
+        25,
+      ]);
       const result = await service.findCategoryBySlug(findCategoryBySlugArgs);
 
       expect(categoryRepository.findOne).toHaveBeenCalledTimes(1);
@@ -431,7 +427,7 @@ describe('RestaurntService', () => {
     });
 
     it('should fail on exception', async () => {
-      jest.spyOn(categoryRepository, 'findOne').mockRejectedValue(new Error());
+      categoryRepository.findOne.mockRejectedValue(new Error());
 
       const result = await service.findCategoryBySlug(findCategoryBySlugArgs);
 
@@ -445,9 +441,10 @@ describe('RestaurntService', () => {
   describe('allRestaurants', () => {
     const allRestaurantsArgs = { page: 2, take: 10 };
     it('should load all restaurants', async () => {
-      jest
-        .spyOn(restaurantRepository, 'pagenatedFindAndCount')
-        .mockResolvedValue([expect.any(Array), 25]);
+      restaurantRepository.pagenatedFindAndCount.mockResolvedValue([
+        expect.any(Array),
+        25,
+      ]);
 
       const result = await service.allRestaurants(allRestaurantsArgs);
 
@@ -460,9 +457,7 @@ describe('RestaurntService', () => {
     });
 
     it('should fail on exception', async () => {
-      jest
-        .spyOn(restaurantRepository, 'pagenatedFindAndCount')
-        .mockRejectedValue(new Error());
+      restaurantRepository.pagenatedFindAndCount.mockRejectedValue(new Error());
 
       const result = await service.allRestaurants(allRestaurantsArgs);
 
@@ -480,7 +475,7 @@ describe('RestaurntService', () => {
       name: 'test-restaurant',
     };
     it('should fail if restaurant is not found', async () => {
-      jest.spyOn(restaurantRepository, 'findOne').mockResolvedValue(null);
+      restaurantRepository.findOne.mockResolvedValue(null);
 
       const result = await service.findRestaurantById(findRestaurantByIdArgs);
 
@@ -496,9 +491,9 @@ describe('RestaurntService', () => {
     });
 
     it('should load restaurant', async () => {
-      jest
-        .spyOn(restaurantRepository, 'findOne')
-        .mockResolvedValue(mockedRestaurant as Restaurant);
+      restaurantRepository.findOne.mockResolvedValue(
+        mockedRestaurant as Restaurant,
+      );
 
       const result = await service.findRestaurantById(findRestaurantByIdArgs);
 
@@ -511,9 +506,7 @@ describe('RestaurntService', () => {
     });
 
     it('sould fail on exception', async () => {
-      jest
-        .spyOn(restaurantRepository, 'findOne')
-        .mockRejectedValue(new Error());
+      restaurantRepository.findOne.mockRejectedValue(new Error());
 
       const result = await service.findRestaurantById(findRestaurantByIdArgs);
 
@@ -528,9 +521,7 @@ describe('RestaurntService', () => {
     const searchRestaurantByNameArgs = { query: 'chicken', page: 2, take: 10 };
 
     it('should fail if restaurant is not found', async () => {
-      jest
-        .spyOn(restaurantRepository, 'pagenatedFindAndCount')
-        .mockResolvedValue([[], 0]);
+      restaurantRepository.pagenatedFindAndCount.mockResolvedValue([[], 0]);
 
       const result = await service.searchRestaurantByName(
         searchRestaurantByNameArgs,
@@ -552,9 +543,10 @@ describe('RestaurntService', () => {
     });
 
     it('should load restaurants', async () => {
-      jest
-        .spyOn(restaurantRepository, 'pagenatedFindAndCount')
-        .mockResolvedValue([expect.any(Array), 25]);
+      restaurantRepository.pagenatedFindAndCount.mockResolvedValue([
+        expect.any(Array),
+        25,
+      ]);
 
       const result = await service.searchRestaurantByName(
         searchRestaurantByNameArgs,
@@ -578,9 +570,7 @@ describe('RestaurntService', () => {
     });
 
     it('should fail on exception', async () => {
-      jest
-        .spyOn(restaurantRepository, 'pagenatedFindAndCount')
-        .mockRejectedValue(new Error());
+      restaurantRepository.pagenatedFindAndCount.mockRejectedValue(new Error());
 
       const result = await service.searchRestaurantByName(
         searchRestaurantByNameArgs,
@@ -629,7 +619,7 @@ describe('RestaurntService', () => {
       ],
     };
     it('should fail if restaurant is not found', async () => {
-      jest.spyOn(restaurantRepository, 'findOne').mockResolvedValue(null);
+      restaurantRepository.findOne.mockResolvedValue(null);
 
       const result = await service.createDish(
         mockedOwner as User,
@@ -648,9 +638,9 @@ describe('RestaurntService', () => {
 
     it("should fail if the restaurant is not owner's restaurant", async () => {
       const anotherMockedRestaurant = { id: 2, ownerId: 2 };
-      jest
-        .spyOn(restaurantRepository, 'findOne')
-        .mockResolvedValue(anotherMockedRestaurant as Restaurant);
+      restaurantRepository.findOne.mockResolvedValue(
+        anotherMockedRestaurant as Restaurant,
+      );
 
       const result = await service.createDish(
         mockedOwner as User,
@@ -668,9 +658,9 @@ describe('RestaurntService', () => {
     });
 
     it('should create dish', async () => {
-      jest
-        .spyOn(restaurantRepository, 'findOne')
-        .mockResolvedValue(mockedRestaurant as Restaurant);
+      restaurantRepository.findOne.mockResolvedValue(
+        mockedRestaurant as Restaurant,
+      );
       dishRepository.create.mockReturnValue(createDishArgs);
       dishRepository.save.mockResolvedValue(createDishArgs);
 
@@ -694,9 +684,7 @@ describe('RestaurntService', () => {
     });
 
     it('should fail on exception', async () => {
-      jest
-        .spyOn(restaurantRepository, 'findOne')
-        .mockRejectedValue(new Error());
+      restaurantRepository.findOne.mockRejectedValue(new Error());
 
       const result = await service.createDish(
         mockedOwner as User,

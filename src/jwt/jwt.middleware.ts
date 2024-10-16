@@ -9,7 +9,7 @@ export class JwtMiddleware implements NestMiddleware {
     private readonly jwtService: JwtService,
     private readonly userService: UserService,
   ) {}
-  async use(req: Request, res: Response, next: NextFunction) {
+  async processRequestHeaders(req: Request) {
     if ('x-jwt' in req.headers) {
       const token = req.headers['x-jwt'];
       try {
@@ -22,6 +22,10 @@ export class JwtMiddleware implements NestMiddleware {
         }
       } catch (e) {}
     }
+  }
+
+  async use(req: Request, res: Response, next: NextFunction) {
+    await this.processRequestHeaders(req);
     next();
   }
 }
