@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { Inject, Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { Order, OrderStatus } from './entities/order.entity';
@@ -10,6 +10,14 @@ import { Dish, DishChoice } from 'src/restaurants/entities/dish.entity';
 import { GetOrdersInput, GetOrdersOutput } from './dtos/get-orders.dto';
 import { GetOrderInput, GetOrderOutput } from './dtos/get-order.dto';
 import { EditOrderInput, EditOrderOutput } from './dtos/edit-order.dto';
+import {
+  NEW_COOKED_ORDER,
+  NEW_ORDER_UPDATE,
+  NEW_PENDING_ORDER,
+  PUB_SUB,
+} from 'src/common/common.constants';
+import { PubSub } from 'graphql-subscriptions';
+import { TakeOrderInput, TakeOrderOutput } from './dtos/take-order.dto';
 
 @Injectable()
 export class OrderService {
@@ -19,6 +27,7 @@ export class OrderService {
     private readonly orderItems: Repository<OrderItem>,
     @InjectRepository(Dish) private readonly dishes: Repository<Dish>,
     private readonly restaurants: RestaurantRepository,
+    @Inject(PUB_SUB) private readonly pubsub: PubSub,
   ) {}
 
   async createOrder(
@@ -76,7 +85,7 @@ export class OrderService {
         );
         orderItems.push(orderItem);
       }
-      await this.orders.save(
+      const order = await this.orders.save(
         this.orders.create({
           customer,
           restaurant,
@@ -84,6 +93,9 @@ export class OrderService {
           items: orderItems,
         }),
       );
+      await this.pubsub.publish(NEW_PENDING_ORDER, {
+        pendingOrders: { order, ownerId: restaurant.ownerId },
+      });
       return { ok: true };
     } catch (error) {
       return { ok: false, error: 'Could not create order' };
@@ -99,20 +111,20 @@ export class OrderService {
 
       if (user.role === UserRole.Client) {
         [orders, totalResults] = await this.orders.findAndCount({
-          where: { customer: { id: user.id }, ...(status && { status }) },
+          where: { customerId: user.id, ...(status && { status }) },
           take,
           skip: (page - 1) * take,
         });
       } else if (user.role === UserRole.Delivery) {
         [orders, totalResults] = await this.orders.findAndCount({
-          where: { driver: user, ...(status && { status }) },
+          where: { driverId: user.id, ...(status && { status }) },
           take,
           skip: (page - 1) * take,
         });
       } else if (user.role === UserRole.Owner) {
         [orders, totalResults] = await this.orders.findAndCount({
           where: {
-            restaurant: { owner: { id: user.id } },
+            restaurant: { ownerId: user.id },
             ...(status && { status }),
           },
           take,
@@ -167,7 +179,6 @@ export class OrderService {
     try {
       const order = await this.orders.findOne({
         where: { id },
-        relations: { restaurant: true },
       });
       if (!order) {
         return { ok: false, error: 'Order not found' };
@@ -199,14 +210,55 @@ export class OrderService {
           )
             canEdit = false;
           break;
+        case UserRole.Client:
+          canEdit = false;
       }
       if (!canEdit) {
         return { ok: false, error: "You can't edit order" };
       }
+      const updatedOrder = { ...order, status };
       await this.orders.save({ id, status });
+      if (user.role === UserRole.Owner) {
+        if (status === OrderStatus.Cooked) {
+          await this.pubsub.publish(NEW_COOKED_ORDER, {
+            cookedOrders: updatedOrder,
+          });
+        }
+      }
+      await this.pubsub.publish(NEW_ORDER_UPDATE, {
+        orderUpdates: updatedOrder,
+      });
       return { ok: true };
     } catch (error) {
       return { ok: false, error: 'Could not edit order' };
+    }
+  }
+
+  async takeOrder(
+    driver: User,
+    { id }: TakeOrderInput,
+  ): Promise<TakeOrderOutput> {
+    try {
+      const order = await this.orders.findOne({ where: { id } });
+      if (!order) {
+        return { ok: false, error: 'Order not found' };
+      }
+      if (order.driver) {
+        return { ok: false, error: 'This order already has a driver' };
+      }
+      if (![OrderStatus.Cooked, OrderStatus.Cooking].includes(order.status)) {
+        return {
+          ok: false,
+          error: 'Could not be assigned before food has been ready',
+        };
+      }
+      await this.orders.save({ id, driver });
+      await this.pubsub.publish(NEW_ORDER_UPDATE, {
+        orderUpdates: { ...order, driver },
+      });
+      return { ok: true };
+    } catch (error) {
+      return { ok: false, error: 'Could not take order' };
     }
   }
 }

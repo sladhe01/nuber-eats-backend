@@ -1,6 +1,5 @@
 import { ArgsType, Field, InputType, Int, ObjectType } from '@nestjs/graphql';
 import { CoreOutput } from 'src/common/dtos/output.dto';
-import { DishChoice } from 'src/restaurants/entities/dish.entity';
 
 @InputType()
 class CreateOrderItemOption {
@@ -8,7 +7,7 @@ class CreateOrderItemOption {
   name: string;
 
   @Field(() => [String])
-  choices: String[];
+  choices: string[];
 }
 
 @InputType()
