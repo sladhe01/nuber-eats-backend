@@ -111,20 +111,20 @@ export class OrderService {
 
       if (user.role === UserRole.Client) {
         [orders, totalResults] = await this.orders.findAndCount({
-          where: { customerId: user.id, ...(status && { status }) },
+          where: { customer: { id: user.id }, ...(status && { status }) },
           take,
           skip: (page - 1) * take,
         });
       } else if (user.role === UserRole.Delivery) {
         [orders, totalResults] = await this.orders.findAndCount({
-          where: { driverId: user.id, ...(status && { status }) },
+          where: { driver: { id: user.id }, ...(status && { status }) },
           take,
           skip: (page - 1) * take,
         });
       } else if (user.role === UserRole.Owner) {
         [orders, totalResults] = await this.orders.findAndCount({
           where: {
-            restaurant: { ownerId: user.id },
+            restaurant: { owner: { id: user.id } },
             ...(status && { status }),
           },
           take,
@@ -249,12 +249,12 @@ export class OrderService {
       if (![OrderStatus.Cooked, OrderStatus.Cooking].includes(order.status)) {
         return {
           ok: false,
-          error: 'Could not be assigned before food has been ready',
+          error: 'Could not be assigned before owner has accepted order',
         };
       }
       await this.orders.save({ id, driver });
       await this.pubsub.publish(NEW_ORDER_UPDATE, {
-        orderUpdates: { ...order, driver },
+        orderUpdates: { ...order, driver, driverId: driver.id },
       });
       return { ok: true };
     } catch (error) {
