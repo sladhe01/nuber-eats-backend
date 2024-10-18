@@ -780,7 +780,7 @@ describe('OrderService', () => {
       });
       expect(result).toMatchObject({
         ok: false,
-        error: 'Could not be assigned before food has been ready',
+        error: 'Could not be assigned before owner has accepted order',
       });
     });
 

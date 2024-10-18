@@ -90,7 +90,8 @@ export class OrderResolver {
       }
       if (
         user.role === UserRole.Delivery &&
-        order.status === OrderStatus.Cooked
+        order.status === OrderStatus.Cooked &&
+        !order.driver
       ) {
         return false;
       }
