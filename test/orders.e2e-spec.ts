@@ -13,6 +13,7 @@ import { WebSocket } from 'ws';
 import { Order, OrderStatus } from 'src/orders/entities/order.entity';
 
 const GRAPHQL_ENDPOINT = '/graphql';
+const port = 4000;
 
 //mockUser 더미데이터
 const testOwner1 = {
