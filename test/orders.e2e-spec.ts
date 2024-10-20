@@ -92,8 +92,8 @@ describe('Order Module (e2e)', () => {
     categoryRepository = module.get(CategoryRepository);
     dishRepository = module.get(getRepositoryToken(Dish));
     await app.init();
-    //subscription 테스트하기 위해서 3000번 포트에서 실행
-    await app.listen(3000);
+    //subscription 테스트하기 위해서 4000번 포트에서 실행
+    await app.listen(4000);
 
     //mockUser 생성
     for (const user of testUsers) {
@@ -280,26 +280,26 @@ describe('Order Module (e2e)', () => {
     beforeEach(async () => {
       //subscription client 생성
       owner1SubscriptionClient = createClient({
-        url: `ws://localhost:3000${GRAPHQL_ENDPOINT}`,
+        url: `ws://localhost:${port}${GRAPHQL_ENDPOINT}`,
         webSocketImpl: WebSocket,
         connectionParams: { 'x-jwt': owner1Token },
         //lazy default값은 true -> 실제방식대로 호출될 때 까지 연결안됨, false -> 즉시 연결
         lazy: false,
       });
       owner2SubscriptionClient = createClient({
-        url: `ws://localhost:3000${GRAPHQL_ENDPOINT}`,
+        url: `ws://localhost:${port}${GRAPHQL_ENDPOINT}`,
         webSocketImpl: WebSocket,
         connectionParams: { 'x-jwt': owner2Token },
         lazy: false,
       });
       driver1SubscriptionClient = createClient({
-        url: `ws://localhost:3000${GRAPHQL_ENDPOINT}`,
+        url: `ws://localhost:${port}${GRAPHQL_ENDPOINT}`,
         webSocketImpl: WebSocket,
         connectionParams: { 'x-jwt': driver1Token },
         lazy: false,
       });
       client1SubscriptionClient = createClient({
-        url: `ws://localhost:3000${GRAPHQL_ENDPOINT}`,
+        url: `ws://localhost:${port}${GRAPHQL_ENDPOINT}`,
         webSocketImpl: WebSocket,
         connectionParams: { 'x-jwt': client1Token },
         lazy: false,
@@ -476,37 +476,37 @@ describe('Order Module (e2e)', () => {
   describe('editOrder', () => {
     beforeEach(async () => {
       owner1SubscriptionClient = createClient({
-        url: `ws://localhost:3000${GRAPHQL_ENDPOINT}`,
+        url: `ws://localhost:${port}${GRAPHQL_ENDPOINT}`,
         webSocketImpl: WebSocket,
         connectionParams: { 'x-jwt': owner1Token },
         lazy: false,
       });
       owner2SubscriptionClient = createClient({
-        url: `ws://localhost:3000${GRAPHQL_ENDPOINT}`,
+        url: `ws://localhost:${port}${GRAPHQL_ENDPOINT}`,
         webSocketImpl: WebSocket,
         connectionParams: { 'x-jwt': owner2Token },
         lazy: false,
       });
       driver1SubscriptionClient = createClient({
-        url: `ws://localhost:3000${GRAPHQL_ENDPOINT}`,
+        url: `ws://localhost:${port}${GRAPHQL_ENDPOINT}`,
         webSocketImpl: WebSocket,
         connectionParams: { 'x-jwt': driver1Token },
         lazy: false,
       });
       driver2SubscriptionClient = createClient({
-        url: `ws://localhost:3000${GRAPHQL_ENDPOINT}`,
+        url: `ws://localhost:${port}${GRAPHQL_ENDPOINT}`,
         webSocketImpl: WebSocket,
         connectionParams: { 'x-jwt': driver2Token },
         lazy: false,
       });
       client1SubscriptionClient = createClient({
-        url: `ws://localhost:3000${GRAPHQL_ENDPOINT}`,
+        url: `ws://localhost:${port}${GRAPHQL_ENDPOINT}`,
         webSocketImpl: WebSocket,
         connectionParams: { 'x-jwt': client1Token },
         lazy: false,
       });
       client2SubscriptionClient = createClient({
-        url: `ws://localhost:3000${GRAPHQL_ENDPOINT}`,
+        url: `ws://localhost:${port}${GRAPHQL_ENDPOINT}`,
         webSocketImpl: WebSocket,
         connectionParams: { 'x-jwt': client2Token },
         lazy: false,
@@ -908,31 +908,31 @@ describe('Order Module (e2e)', () => {
 
     beforeEach(async () => {
       owner1SubscriptionClient = createClient({
-        url: `ws://localhost:3000${GRAPHQL_ENDPOINT}`,
+        url: `ws://localhost:${port}${GRAPHQL_ENDPOINT}`,
         webSocketImpl: WebSocket,
         connectionParams: { 'x-jwt': owner1Token },
         lazy: false,
       });
       owner2SubscriptionClient = createClient({
-        url: `ws://localhost:3000${GRAPHQL_ENDPOINT}`,
+        url: `ws://localhost:${port}${GRAPHQL_ENDPOINT}`,
         webSocketImpl: WebSocket,
         connectionParams: { 'x-jwt': owner2Token },
         lazy: false,
       });
       driver1SubscriptionClient = createClient({
-        url: `ws://localhost:3000${GRAPHQL_ENDPOINT}`,
+        url: `ws://localhost:${port}${GRAPHQL_ENDPOINT}`,
         webSocketImpl: WebSocket,
         connectionParams: { 'x-jwt': driver1Token },
         lazy: false,
       });
       driver2SubscriptionClient = createClient({
-        url: `ws://localhost:3000${GRAPHQL_ENDPOINT}`,
+        url: `ws://localhost:${port}${GRAPHQL_ENDPOINT}`,
         webSocketImpl: WebSocket,
         connectionParams: { 'x-jwt': driver2Token },
         lazy: false,
       });
       client1SubscriptionClient = createClient({
-        url: `ws://localhost:3000${GRAPHQL_ENDPOINT}`,
+        url: `ws://localhost:${port}${GRAPHQL_ENDPOINT}`,
         webSocketImpl: WebSocket,
         connectionParams: { 'x-jwt': client1Token },
         lazy: false,
