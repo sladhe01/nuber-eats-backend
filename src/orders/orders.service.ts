@@ -32,7 +32,7 @@ export class OrderService {
 
   async createOrder(
     customer: User,
-    { restaurantId, items }: CreateOrderInput,
+    { restaurantId, items, destination }: CreateOrderInput,
   ): Promise<CreateOrderOutput> {
     try {
       const restaurant = await this.restaurants.findOne({
@@ -91,6 +91,7 @@ export class OrderService {
           restaurant,
           total: orderFinalPrice,
           items: orderItems,
+          destination,
         }),
       );
       await this.pubsub.publish(NEW_PENDING_ORDER, {
