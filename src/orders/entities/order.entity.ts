@@ -10,7 +10,7 @@ import { Restaurant } from 'src/restaurants/entities/restaurant.entity';
 import { User } from 'src/users/entities/user.entity';
 import { Column, Entity, ManyToOne, OneToMany, RelationId } from 'typeorm';
 import { OrderItem } from './order-item.entity';
-import { IsEnum, IsNumber } from 'class-validator';
+import { IsEnum, IsNumber, IsString } from 'class-validator';
 
 export enum OrderStatus {
   Pending = 'Pending',
@@ -69,4 +69,10 @@ export class Order extends CoreEntity {
   @Column({ type: 'enum', enum: OrderStatus, default: OrderStatus.Pending })
   @IsEnum(OrderStatus)
   status: OrderStatus;
+
+  //test할 때 nullable 지우기
+  @Field((type) => String, { nullable: true })
+  @Column({ nullable: true })
+  @IsString()
+  destination: string;
 }

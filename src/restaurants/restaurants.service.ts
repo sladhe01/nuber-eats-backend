@@ -155,6 +155,7 @@ export class RestaurantService {
           page,
           take,
           where: { category: { id: category.id } },
+          order: { isPromoted: 'DESC' },
         });
       const totalPages = Math.ceil(totalResults / take);
       return { ok: true, category, restaurants, totalResults, totalPages };
@@ -173,6 +174,7 @@ export class RestaurantService {
           page,
           take,
           relations: { menu: true },
+          order: { isPromoted: 'DESC' },
         });
       const totalPages = Math.ceil(totalResults / take);
       return { ok: true, results, totalPages, totalResults };
@@ -210,6 +212,7 @@ export class RestaurantService {
           take,
           page,
           relations: { menu: true },
+          order: { isPromoted: 'DESC' },
         });
       if (restaurants.length === 0) {
         return { ok: false, error: 'Not found restaurant' };
