@@ -173,7 +173,7 @@ export class RestaurantService {
         await this.restaurants.pagenatedFindAndCount({
           page,
           take,
-          relations: { menu: true },
+          relations: { menu: true, category: true },
           order: { isPromoted: 'DESC' },
         });
       const totalPages = Math.ceil(totalResults / take);
