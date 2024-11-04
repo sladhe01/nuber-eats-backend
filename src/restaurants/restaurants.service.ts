@@ -29,6 +29,7 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { Dish } from './entities/dish.entity';
 import { DeleteDishInput, DeleteDishOutput } from './dtos/delete-dish.dto';
 import { EditDishInput, EditDishOutput } from './dtos/edit-dish.dto';
+import { MyrestaurantsOutput } from './dtos/my-restaurants.dto';
 
 @Injectable()
 export class RestaurantService {
@@ -296,6 +297,17 @@ export class RestaurantService {
       return { ok: true };
     } catch (error) {
       return { ok: false, error: 'Could not edit dish' };
+    }
+  }
+
+  async myRestaurants(owner: User): Promise<MyrestaurantsOutput> {
+    try {
+      const restaurants = await this.restaurants.find({
+        where: { owner: { id: owner.id } },
+      });
+      return { restaurants, ok: true };
+    } catch (error) {
+      return { ok: false, error: 'Could not find restaurants' };
     }
   }
 }
