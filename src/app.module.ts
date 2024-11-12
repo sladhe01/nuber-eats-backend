@@ -26,6 +26,7 @@ import {
   CommonPayment,
 } from './payments/entities/payment.entity';
 import { ScheduleModule } from '@nestjs/schedule';
+import { UploadsModule } from './uploads/uploads.module';
 
 @Module({
   imports: [
@@ -44,6 +45,8 @@ import { ScheduleModule } from '@nestjs/schedule';
         MAILGUN_API_KEY: Joi.string().required(),
         MAILGUN_DOMAIN_NAME: Joi.string().required(),
         MAILGUN_FROM_EMAIL: Joi.string().required(),
+        S3_ACCESS_KEY_ID: Joi.string().required(),
+        S3_SECRET_ACCESS_KEY: Joi.string().required(),
       }),
     }),
     GraphQLModule.forRootAsync<ApolloDriverConfig>({
@@ -112,6 +115,11 @@ import { ScheduleModule } from '@nestjs/schedule';
     CommonModule,
     PaymentsModule,
     ScheduleModule.forRoot(),
+    UploadsModule.forRoot({
+      isGlobal: true,
+      accessKeyId: process.env.S3_ACCESS_KEY_ID,
+      secretAccessKey: process.env.S3_SECRET_ACCESS_KEY,
+    }),
   ],
   controllers: [],
   providers: [],
