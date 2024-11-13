@@ -57,7 +57,7 @@ export class RestaurantService {
       //없는 카테고리라고 여기서 새로 생성하지 않을 예정
       newRestaurant.category = category;
       await this.restaurants.save(newRestaurant);
-      return { ok: true };
+      return { ok: true, restaurantId: newRestaurant.id };
     } catch (error) {
       return { ok: false, error: 'Could not create restaurant' };
     }
