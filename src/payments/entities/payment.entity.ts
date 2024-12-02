@@ -2,20 +2,22 @@ import { Field, InputType, Int, ObjectType } from '@nestjs/graphql';
 import { CoreEntity } from 'src/common/entities/core.entity';
 import { Restaurant } from 'src/restaurants/entities/restaurant.entity';
 import { User } from 'src/users/entities/user.entity';
-import {
-  Column,
-  Entity,
-  JoinColumn,
-  ManyToOne,
-  OneToOne,
-  RelationId,
-} from 'typeorm';
+import { Column, Entity, ManyToOne, RelationId } from 'typeorm';
 
-@InputType('PaddleInputType')
+@InputType('PaymentInputType')
 @ObjectType()
 @Entity()
-export class PaddlePayment extends CoreEntity {
-  // Paddle 전용 필드들...
+export class Payment extends CoreEntity {
+  @Field(() => User, { nullable: true })
+  @ManyToOne(() => User, (user) => user.payments, {
+    onDelete: 'SET NULL',
+    nullable: true,
+  })
+  user: User;
+
+  @RelationId((payment: Payment) => payment.user)
+  userId: number;
+
   @Field(() => String)
   @Column()
   transactionId: string;
@@ -30,42 +32,6 @@ export class PaddlePayment extends CoreEntity {
   restaurant?: Restaurant;
 
   @Field((type) => Int, { nullable: true })
-  @RelationId((payment: PaddlePayment) => payment.restaurant)
+  @RelationId((payment: Payment) => payment.restaurant)
   restaurantId?: number;
-}
-
-@InputType('NapyInputType')
-@ObjectType()
-@Entity()
-export class NaverPayment extends CoreEntity {
-  // 네이버페이 전용 필드들...
-  @Field(() => String)
-  @Column()
-  paymentId: string;
-}
-
-@InputType('CommonPaymentInputType')
-@ObjectType()
-@Entity()
-export class CommonPayment extends CoreEntity {
-  //공통필드
-  @Field(() => User, { nullable: true })
-  @ManyToOne(() => User, (user) => user.payments, {
-    onDelete: 'SET NULL',
-    nullable: true,
-  })
-  user: User;
-
-  @RelationId((payment: CommonPayment) => payment.user)
-  userId: number;
-
-  @OneToOne(() => PaddlePayment, { nullable: true })
-  @JoinColumn()
-  @Field((type) => PaddlePayment)
-  paddlePayment?: PaddlePayment;
-
-  @OneToOne(() => NaverPayment, { nullable: true })
-  @JoinColumn()
-  @Field((type) => NaverPayment)
-  naverPayPayment?: NaverPayment;
 }

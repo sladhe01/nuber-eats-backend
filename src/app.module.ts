@@ -20,11 +20,7 @@ import { Order } from './orders/entities/order.entity';
 import { OrderItem } from './orders/entities/order-item.entity';
 import { CommonModule } from './common/common.module';
 import { PaymentsModule } from './payments/payments.module';
-import {
-  NaverPayment,
-  PaddlePayment,
-  CommonPayment,
-} from './payments/entities/payment.entity';
+import { Payment } from './payments/entities/payment.entity';
 import { ScheduleModule } from '@nestjs/schedule';
 import { UploadsModule } from './uploads/uploads.module';
 
@@ -96,9 +92,7 @@ import { UploadsModule } from './uploads/uploads.module';
         Dish,
         Order,
         OrderItem,
-        CommonPayment,
-        PaddlePayment,
-        NaverPayment,
+        Payment,
       ],
     }),
     JwtModule.forRoot({ isGlobal: true, privateKey: process.env.PRIVATE_KEY }),

@@ -39,6 +39,11 @@ import { DeleteDishInput, DeleteDishOutput } from './dtos/delete-dish.dto';
 import { EditDishInput, EditDishOutput } from './dtos/edit-dish.dto';
 import { Dish } from './entities/dish.entity';
 import { MyrestaurantsOutput } from './dtos/my-restaurants.dto';
+import {
+  MyRestaurantInput,
+  MyRestaurantOutput,
+} from './dtos/my-restaurant.dto';
+import { GetDishInput, GetDishOutput } from './dtos/get-dish.dto';
 
 @Injectable() // Resolver 잇으면 Injectable 없어도 되긴한데 명확하게 하기 위해 일단 써줌
 @Resolver(() => Restaurant)
@@ -81,6 +86,15 @@ export class RestaurantsResolver {
   @Role(['Owner'])
   myRestaurants(@AuthUser() owner: User): Promise<MyrestaurantsOutput> {
     return this.restaurantService.myRestaurants(owner);
+  }
+
+  @Query((returns) => MyRestaurantOutput)
+  @Role(['Owner'])
+  myRestaurant(
+    @AuthUser() owner: User,
+    @Args() myRestaurantInput: MyRestaurantInput,
+  ): Promise<MyRestaurantOutput> {
+    return this.restaurantService.myRestaurant(owner, myRestaurantInput);
   }
 }
 
@@ -156,5 +170,10 @@ export class DishResolver {
     @Args() editDishInput: EditDishInput,
   ): Promise<EditDishOutput> {
     return this.restaurantService.editDish(owner, editDishInput);
+  }
+
+  @Query(() => GetDishOutput)
+  getDish(@Args() getDishInput: GetDishInput): Promise<GetDishOutput> {
+    return this.restaurantService.getDish(getDishInput);
   }
 }

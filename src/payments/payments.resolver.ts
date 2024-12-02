@@ -1,5 +1,5 @@
 import { Args, Mutation, Query, Resolver } from '@nestjs/graphql';
-import { CommonPayment } from './entities/payment.entity';
+import { Payment } from './entities/payment.entity';
 import { PaymentService } from './payments.service';
 import { Role } from 'src/auth/role.decorator';
 import { AuthUser } from 'src/auth/auth-user.decorator';
@@ -13,7 +13,7 @@ import {
   GetRestaurantPaymentsOutput,
 } from './dtos/get-restaurant-payments.dto';
 
-@Resolver((of) => CommonPayment)
+@Resolver((of) => Payment)
 export class PaymentResolver {
   constructor(private readonly paymentService: PaymentService) {}
 

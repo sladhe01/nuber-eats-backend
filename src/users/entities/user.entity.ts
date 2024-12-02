@@ -11,7 +11,7 @@ import { InternalServerErrorException } from '@nestjs/common';
 import { IsBoolean, IsEmail, IsEnum, IsString } from 'class-validator';
 import { Restaurant } from 'src/restaurants/entities/restaurant.entity';
 import { Order } from 'src/orders/entities/order.entity';
-import { CommonPayment } from 'src/payments/entities/payment.entity';
+import { Payment } from 'src/payments/entities/payment.entity';
 
 export enum UserRole {
   Client = 'Client',
@@ -58,9 +58,9 @@ export class User extends CoreEntity {
   @Field(() => [Order])
   rides?: Order[];
 
-  @OneToMany(() => CommonPayment, (payment) => payment.user, { nullable: true })
-  @Field(() => [CommonPayment])
-  payments?: CommonPayment[];
+  @OneToMany(() => Payment, (payment) => payment.user, { nullable: true })
+  @Field(() => [Payment])
+  payments?: Payment[];
 
   @BeforeInsert()
   @BeforeUpdate()

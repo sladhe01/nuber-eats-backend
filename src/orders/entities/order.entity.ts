@@ -69,10 +69,4 @@ export class Order extends CoreEntity {
   @Column({ type: 'enum', enum: OrderStatus, default: OrderStatus.Pending })
   @IsEnum(OrderStatus)
   status: OrderStatus;
-
-  //test할 때 nullable 지우기
-  @Field((type) => String, { nullable: true })
-  @Column({ nullable: true })
-  @IsString()
-  destination: string;
 }

@@ -10,12 +10,21 @@ import { CoreOutput } from 'src/common/dtos/output.dto';
 import { Order } from '../entities/order.entity';
 
 @InputType()
+class CreateOrderItemsOptionChoice {
+  @Field(() => String)
+  name: string;
+
+  @Field(() => Int)
+  extra: number;
+}
+
+@InputType()
 class CreateOrderItemOption {
   @Field(() => String)
   name: string;
 
-  @Field(() => [String])
-  choices: string[];
+  @Field(() => [CreateOrderItemsOptionChoice])
+  choices: CreateOrderItemsOptionChoice[];
 }
 
 @InputType()
@@ -28,11 +37,7 @@ export class CreateOrderItem {
 }
 
 @ArgsType()
-export class CreateOrderInput extends PickType(
-  Order,
-  ['destination'],
-  ArgsType,
-) {
+export class CreateOrderInput {
   @Field(() => Int)
   restaurantId: number;
 
@@ -41,4 +46,7 @@ export class CreateOrderInput extends PickType(
 }
 
 @ObjectType()
-export class CreateOrderOutput extends CoreOutput {}
+export class CreateOrderOutput extends CoreOutput {
+  @Field((type) => Int, { nullable: true })
+  orderId?: number;
+}

@@ -30,6 +30,11 @@ import { Dish } from './entities/dish.entity';
 import { DeleteDishInput, DeleteDishOutput } from './dtos/delete-dish.dto';
 import { EditDishInput, EditDishOutput } from './dtos/edit-dish.dto';
 import { MyrestaurantsOutput } from './dtos/my-restaurants.dto';
+import {
+  MyRestaurantInput,
+  MyRestaurantOutput,
+} from './dtos/my-restaurant.dto';
+import { GetDishInput, GetDishOutput } from './dtos/get-dish.dto';
 
 @Injectable()
 export class RestaurantService {
@@ -308,6 +313,34 @@ export class RestaurantService {
       return { restaurants, ok: true };
     } catch (error) {
       return { ok: false, error: 'Could not find restaurants' };
+    }
+  }
+
+  async myRestaurant(
+    owner: User,
+    { id }: MyRestaurantInput,
+  ): Promise<MyRestaurantOutput> {
+    try {
+      const restaurant = await this.restaurants.findOne({
+        where: { owner: { id: owner.id }, id },
+        relations: ['menu', 'orders', 'owner'],
+        order: { orders: { createdAt: 'ASC' } },
+      });
+      if (!restaurant || restaurant.ownerId !== owner.id) {
+        return { ok: false, error: "You can't access" };
+      }
+      return { restaurant, ok: true };
+    } catch (error) {
+      return { ok: false, error: 'Could not find restaurant' };
+    }
+  }
+
+  async getDish({ id }: GetDishInput): Promise<GetDishOutput> {
+    try {
+      const dish = await this.dishes.findOne({ where: { id } });
+      return { ok: true, dish };
+    } catch (error) {
+      return { ok: false, error: 'Could not find dish' };
     }
   }
 }

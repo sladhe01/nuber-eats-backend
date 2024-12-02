@@ -32,7 +32,7 @@ export class OrderService {
 
   async createOrder(
     customer: User,
-    { restaurantId, items, destination }: CreateOrderInput,
+    { restaurantId, items }: CreateOrderInput,
   ): Promise<CreateOrderOutput> {
     try {
       const restaurant = await this.restaurants.findOne({
@@ -63,7 +63,7 @@ export class OrderService {
             for (const itemOptionChoice of itemOption.choices) {
               const dishOptionChoice = dishOption.choices.find(
                 (dishOptionChoice) =>
-                  dishOptionChoice.name === itemOptionChoice,
+                  dishOptionChoice.name === itemOptionChoice.name,
               );
               if (!dishOptionChoice) {
                 return { ok: false, error: 'Not found choice' };
@@ -91,13 +91,12 @@ export class OrderService {
           restaurant,
           total: orderFinalPrice,
           items: orderItems,
-          destination,
         }),
       );
       await this.pubsub.publish(NEW_PENDING_ORDER, {
         pendingOrders: { order, ownerId: restaurant.ownerId },
       });
-      return { ok: true };
+      return { ok: true, orderId: order.id };
     } catch (error) {
       return { ok: false, error: 'Could not create order' };
     }
